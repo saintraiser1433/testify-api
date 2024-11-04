@@ -114,8 +114,16 @@ export interface AuthModel {
     id?: string,
     username?: string,
     password?: string
+    role: string
 }
 
+
+export interface DecodedPayload {
+    id: string;
+    email: string;
+    role: string
+
+}
 
 
 declare module 'express' {
@@ -123,3 +131,4 @@ declare module 'express' {
         user?: any; // Replace `any` with your specific user type if available
     }
 }
+

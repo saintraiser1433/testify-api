@@ -26,7 +26,7 @@ export const getExaminee = async (req: Request, res: Response, next: NextFunctio
 
 export const insertExaminee = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const body = req.body;
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
         const { error, value } = examineeValidation.insert(body);
         if (error) {
             return res.status(400).json({
@@ -64,7 +64,7 @@ export const insertExaminee = async (req: Request, res: Response, next: NextFunc
 export const updateExaminee = async (req: Request, res: Response): Promise<any> => {
     const body = req.body;
     const id = req.params.id;
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
         const { error, value } = examineeValidation.update(body);
 
         if (error) {
@@ -101,7 +101,7 @@ export const updateExaminee = async (req: Request, res: Response): Promise<any> 
 
 export const deleteExaminee = (req: Request, res: Response): Promise<any> => {
     const id = req.params.id;
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
         const examinee = await tx.examinee.findFirst({
             where: {
                 examinee_id: Number(id),

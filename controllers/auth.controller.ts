@@ -1,29 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../prisma/prisma';
-import jwt from 'jsonwebtoken';
-import { generateAccessToken, generateRefreshToken } from '../services/authService.services';
+import { generateAccessToken, generateRefreshToken, validateToken } from '../services/authService.services';
 import bcrypt from 'bcrypt'
-let refreshTokens: string[] = [];
-
-const post = [
-    {
-        id: 1,
-        username: 'john'
-    },
-    {
-        id: 2,
-        username: 'rey'
-    }
-]
-
-export const getTest = (req: Request, res: Response, next: NextFunction): void => {
-    res.status(200).json(post.filter((item) => item.username === req.user.name))
-}
-
-
-
-
-
+import jwt from 'jsonwebtoken';
+import { DecodedPayload } from '../models';
 
 export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const { email, password } = req.body;
@@ -35,22 +15,37 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
             where: {
                 email: email,
             },
+
         })
         if (user) {
+
             const isCorrect = await bcrypt.compare(password, user.password)
-            if (isCorrect) {
-                const accessToken = generateAccessToken(user)
-                const refreshToken = generateRefreshToken(user);
-                const token = {
-                    accessToken,
-                    refreshToken
-                }
-                res.cookie('token', token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-                return res.status(201).json(token)
+
+            if (!isCorrect) {
+                return res.status(400).json({ error: 'Incorrect Credentials' });
             }
+            const users: DecodedPayload = {
+                id: user.id,
+                email: user.email,
+                role: user.role
+            }
+            const accessToken = generateAccessToken(users)
+            const refreshToken = generateRefreshToken(users);
+
+            await prisma.user.update({
+                where: {
+                    id: user.id
+                },
+                data: {
+                    accessToken: accessToken,
+                    refreshToken: refreshToken
+                }
+            })
+            return res.status(201).json({ user: users, token: { accessToken, refreshToken } });
 
         }
         return res.status(400).json({ error: 'Incorrect Credentials' });
+
     } catch (err: any) {
         return res.status(500).json({
             error: err.message
@@ -59,36 +54,85 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
 
 
 }
-// refreshTokens.push(refreshToken);
-// res.status(200).json({ accessToken: accessToken, refreshToken: refreshToken })
 
-export const signup = async (req: Request, res: Response) => {
+
+export const signup = async (req: Request, res: Response): Promise<any> => {
     const { email, password } = req.body;
 
     try {
+
         if (!email || !password) {
-            throw new Error('Please provide email and password ');
+            return res.status(401).json({ error: "Please provide email and password" });
         }
         const hashPass = await bcrypt.hash(password, 10);
+
+        const checkUser = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (checkUser) {
+            return res.status(401).json({ error: "Email Already Exist" });
+
+        }
+
         const user = await prisma.user.create({
-            data: {
-                email: email,
-                password: hashPass
-            }
-        })
-        // const accessToken = generateAccessToken(user)
-        // res.cookie('jwt', accessToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-        res.status(201).json(user)
+            data: { email, password: hashPass, role: 'examinee' }
+        });
+
+        return res.status(201).json(user);
+
     } catch (err: any) {
-        res.status(400).json({
-            error: err.message
-        })
+        return res.status(500).json({ error: err.message });
+
     }
+};
+
+export const signOut = async (req: Request, res: Response): Promise<any> => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ message: 'No Token provided', status: 'unauthenticated' });
+    }
+    const decoded = validateToken(token, process.env.ACCESS_TOKEN_SECRET as string);
+    return await prisma.user.update({
+        where: {
+            id: (decoded as { id: string }).id
+        },
+        data: {
+            accessToken: null,
+            refreshToken: null,
+        }
+    })
 }
 
-export const logout = (req: Request, res: Response) => {
-    res.clearCookie('token');
+
+
+export const verifyToken = (req: Request, res: Response) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: 'No Token provided', status: 'unauthenticated' });
+    }
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, async (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: 'Session expired or invalid token', status: 'unauthenticated' });
+        }
+        const { id } = decoded as DecodedPayload;
+        const user = await prisma.user.findFirst({
+            where: {
+                id: id,
+                accessToken: token
+            }
+        });
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid token or user not found', status: 'unauthenticated' });
+        }
+        return res.status(200).json({ user: user, status: 'authenticated' });
+    });
 }
+
 
 
 
@@ -99,18 +143,19 @@ export const refreshToken = (req: Request, res: Response, next: NextFunction): a
             error: "No Refresh Token "
         })
     }
-    if (!refreshTokens.includes(refreshToken)) {
-        return res.status(403).json({
-            error: "No access"
-        })
-    }
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET as string, (err: any, user: any) => {
-        if (err) {
-            return res.status(403).json({ message: 'Session is expired or invalid token' });
-        }
-        const accessToken = generateAccessToken({ username: user.name });
+    // if (!refreshTokens.includes(refreshToken)) {
+    //     return res.status(403).json({
+    //         error: "No access"
+    //     })
+    // }
+    try {
+        const decoded = validateToken(refreshToken, process.env.REFRESH_TOKEN_SECRET as string);
+        const accessToken = generateAccessToken({ role: '1' });
         return res.json({ accessToken: accessToken })
-    })
+    } catch (err) {
+        return res.status(403).json({ message: 'Session expired or invalid token', status: 'unauthenticated' });
+    }
+
 }
 
 

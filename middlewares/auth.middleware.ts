@@ -13,7 +13,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         if (err) {
             return res.status(403).json({ message: 'Session is expired or invalid token' });
         }
-        req.user = decoded;
+        // req.user = decoded;
         next();
     });
 };

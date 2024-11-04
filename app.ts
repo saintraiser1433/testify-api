@@ -3,6 +3,7 @@ import { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
 import router from './routes/index.route';
+import cookie from 'cookie-parser'
 const app: Express = express();
 const PORT = process.env.APP_PORT || 3000;
 
