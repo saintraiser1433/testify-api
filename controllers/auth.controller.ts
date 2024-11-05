@@ -88,36 +88,33 @@ export const signup = async (req: Request, res: Response): Promise<any> => {
 };
 
 export const signOut = async (req: Request, res: Response): Promise<any> => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({ message: 'No Token provided', status: 'unauthenticated' });
-    }
-    const decoded = validateToken(token, process.env.ACCESS_TOKEN_SECRET as string);
-    return await prisma.user.update({
+    const { id } = req.body;
+    await prisma.user.update({
         where: {
-            id: (decoded as { id: string }).id
+            id: id
         },
         data: {
             accessToken: null,
             refreshToken: null,
         }
     })
+    return res.sendStatus(200);
+
 }
 
 
 
-export const verifyToken = (req: Request, res: Response) => {
+export const verifyToken = (req: Request, res: Response): any => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
-        return res.status(401).json({ message: 'No Token provided', status: 'unauthenticated' });
+        return res.status(401).json({ user: {}, message: 'No Token provided', status: 'unauthenticated' });
     }
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, async (err, decoded) => {
         if (err) {
-            return res.status(403).json({ message: 'Session expired or invalid token', status: 'unauthenticated' });
+            return res.status(403).json({ user: {}, message: 'Session expired or invalid token', status: 'unauthenticated' });
         }
         const { id } = decoded as DecodedPayload;
         const user = await prisma.user.findFirst({
@@ -127,7 +124,7 @@ export const verifyToken = (req: Request, res: Response) => {
             }
         });
         if (!user) {
-            return res.status(401).json({ message: 'Invalid token or user not found', status: 'unauthenticated' });
+            return res.status(401).json({ user: {}, message: 'Invalid token or user not found', status: 'unauthenticated' });
         }
         return res.status(200).json({ user: user, status: 'authenticated' });
     });
