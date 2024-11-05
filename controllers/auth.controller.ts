@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from 'express';
 import prisma from '../prisma/prisma';
 import { generateAccessToken, generateRefreshToken, validateToken } from '../services/authService.services';
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken';
 import { DecodedPayload } from '../models';
 
 export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -41,7 +40,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
                     refreshToken: refreshToken
                 }
             })
-            return res.status(201).json({ user: users, token: { accessToken, refreshToken } });
+            return res.status(201).json({ token: { accessToken, refreshToken } });
 
         }
         return res.status(400).json({ error: 'Incorrect Credentials' });
@@ -104,51 +103,66 @@ export const signOut = async (req: Request, res: Response): Promise<any> => {
 
 
 
-export const verifyToken = (req: Request, res: Response): any => {
+// export const verifyToken = (req: Request, res: Response): any => {
+//     const authHeader = req.headers['authorization'];
+//     const token = authHeader && authHeader.split(' ')[1];
+
+//     if (!token) {
+//         return res.status(401).json({ user: {}, message: 'No Token provided', status: 'unauthenticated' });
+//     }
+
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, async (err, decoded) => {
+//         if (err) {
+//             return res.status(403).json({ user: {}, message: 'Session expired or invalid token', status: 'unauthenticated' });
+//         }
+//         const { id } = decoded as DecodedPayload;
+//         const user = await prisma.user.findFirst({
+//             where: {
+//                 id: id,
+//                 accessToken: token
+//             }
+//         });
+//         if (!user) {
+//             return res.status(401).json({ user: {}, message: 'Invalid token or user not found', status: 'unauthenticated' });
+//         }
+//         return res.status(200).json({ user: user, status: 'authenticated' });
+//     });
+// }
+
+
+
+
+export const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-
     if (!token) {
-        return res.status(401).json({ user: {}, message: 'No Token provided', status: 'unauthenticated' });
-    }
-
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, async (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ user: {}, message: 'Session expired or invalid token', status: 'unauthenticated' });
-        }
-        const { id } = decoded as DecodedPayload;
-        const user = await prisma.user.findFirst({
-            where: {
-                id: id,
-                accessToken: token
-            }
-        });
-        if (!user) {
-            return res.status(401).json({ user: {}, message: 'Invalid token or user not found', status: 'unauthenticated' });
-        }
-        return res.status(200).json({ user: user, status: 'authenticated' });
-    });
-}
-
-
-
-
-export const refreshToken = (req: Request, res: Response, next: NextFunction): any => {
-    const refreshToken = req.body.token;
-    if (!refreshToken) {
         return res.status(401).json({
-            error: "No Refresh Token "
+            error: "No Token Provided "
         })
     }
-    // if (!refreshTokens.includes(refreshToken)) {
-    //     return res.status(403).json({
-    //         error: "No access"
-    //     })
-    // }
+
     try {
-        const decoded = validateToken(refreshToken, process.env.REFRESH_TOKEN_SECRET as string);
-        const accessToken = generateAccessToken({ role: '1' });
-        return res.json({ accessToken: accessToken })
+        const decoded = validateToken(token) as DecodedPayload;
+        const user = await prisma.user.findFirst({
+            where: {
+                id: decoded.id,
+                refreshToken: token
+            }
+        });
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid token or user not found', status: 'unauthenticated' });
+        }
+
+        const users: DecodedPayload = {
+            id: user.id,
+            email: user.email,
+            role: user.role
+        };
+        const accessToken = generateAccessToken(users);
+
+        return res.status(200).json({ accessToken, status: 'authenticated' });
+
     } catch (err) {
         return res.status(403).json({ message: 'Session expired or invalid token', status: 'unauthenticated' });
     }
