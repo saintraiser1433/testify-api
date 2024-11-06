@@ -8,18 +8,19 @@ import {
     getAssignDeans,
     deleteAssignDeans
 } from '../controllers/deans.controller';
+import { authenticateToken } from '../middlewares/auth.middleware';
 
 
 
 const route = Router();
 
 
-route.get('/', getDeans);
-route.get('/assign/:id', getAssignDeans);
-route.post('/assign', assignDeans);
-route.delete('/assign/:deansId/:courseId', deleteAssignDeans);
-route.post('/', insertDeans);
-route.put('/:id', updatedDeans);
-route.delete('/:id', deleteDeans)
+route.get('/', authenticateToken, getDeans);
+route.get('/assign/:id',authenticateToken, getAssignDeans);
+route.post('/assign',authenticateToken, assignDeans);
+route.delete('/assign/:deansId/:courseId',authenticateToken, deleteAssignDeans);
+route.post('/',authenticateToken, insertDeans);
+route.put('/:id',authenticateToken, updatedDeans);
+route.delete('/:id',authenticateToken, deleteDeans)
 
 export default route;

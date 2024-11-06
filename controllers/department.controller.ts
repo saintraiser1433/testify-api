@@ -3,7 +3,7 @@ import prisma from '../prisma/prisma';
 import { departmentValidation } from '../util/validation';
 
 
-export const getDepartment = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getDepartment = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     try {
         const data = await prisma.department.findMany({
             select: {
@@ -16,13 +16,16 @@ export const getDepartment = async (req: Request, res: Response, next: NextFunct
             },
         });
         return res.status(200).json(data);
-    } catch (err) {
-        next(err);
+    } catch (err: any) {
+        return res.status(500).json({
+            error: err.message
+        });
+
     }
 };
 
 
-export const insertDepartment = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const insertDepartment = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
     return prisma.$transaction(async (tx) => {
         const { error, value } = departmentValidation.validate(body);
@@ -56,7 +59,7 @@ export const insertDepartment = async (req: Request, res: Response, next: NextFu
     });
 }
 
-export const updateDepartment = async (req: Request, res: Response): Promise<any> => {
+export const updateDepartment = async (req: Request, res: Response): Promise<Response> => {
     const body = req.body;
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
@@ -93,7 +96,7 @@ export const updateDepartment = async (req: Request, res: Response): Promise<any
     });
 }
 
-export const deleteDepartment = (req: Request, res: Response): Promise<any> => {
+export const deleteDepartment = (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
         const department = await tx.department.findFirst({

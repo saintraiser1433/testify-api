@@ -3,7 +3,7 @@ import prisma from '../prisma/prisma';
 import { courseValidation } from '../util/validation';
 
 
-export const getCourse = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getCourse = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     try {
         const data = await prisma.course.findMany({
             select: {
@@ -23,7 +23,7 @@ export const getCourse = async (req: Request, res: Response, next: NextFunction)
     }
 };
 
-export const getCourseNoAssociated = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getCourseNoAssociated = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     try {
         const response = await prisma.course.findMany({
             where: {
@@ -45,7 +45,7 @@ export const getCourseNoAssociated = async (req: Request, res: Response, next: N
 };
 
 
-export const insertCourse = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const insertCourse = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
     try {
         return prisma.$transaction(async (tx) => {
@@ -65,7 +65,10 @@ export const insertCourse = async (req: Request, res: Response, next: NextFuncti
             });
 
             if (course) {
-                throw new Error("Course already exist")
+                return res.status(409).json({
+                    message: "Course already exist",
+
+                })
             }
 
             const response = await tx.course.create({
@@ -84,7 +87,7 @@ export const insertCourse = async (req: Request, res: Response, next: NextFuncti
 
 }
 
-export const updateCourse = async (req: Request, res: Response): Promise<any> => {
+export const updateCourse = async (req: Request, res: Response): Promise<Response> => {
     const body = req.body;
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
@@ -124,7 +127,7 @@ export const updateCourse = async (req: Request, res: Response): Promise<any> =>
     });
 }
 
-export const deleteCourse = (req: Request, res: Response): Promise<any> => {
+export const deleteCourse = (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
         const course = await tx.course.findFirst({

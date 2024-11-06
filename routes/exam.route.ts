@@ -6,16 +6,17 @@ import {
     updateExam,
     deleteExam
 } from '../controllers/exam.controller';
+import { authenticateToken } from '../middlewares/auth.middleware';
 
 
 
 const route = Router();
 
 
-route.get('/', getExam);
-route.get('/:id', getExamId);
-route.post('/', insertExam);
-route.put('/:id', updateExam);
-route.delete('/:id', deleteExam)
+route.get('/', authenticateToken, getExam);
+route.get('/:id', authenticateToken, getExamId);
+route.post('/', authenticateToken, insertExam);
+route.put('/:id', authenticateToken, updateExam);
+route.delete('/:id', authenticateToken, deleteExam)
 
 export default route;

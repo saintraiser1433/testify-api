@@ -4,7 +4,7 @@ import { choicesValidation, questionValidation } from '../util/validation';
 import { ChoicesModel } from '../models';
 
 
-export const getQuestion = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getQuestion = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const id = req.params.id;
     try {
         const checkIfExist = await prisma.exam.findFirst({
@@ -39,13 +39,15 @@ export const getQuestion = async (req: Request, res: Response, next: NextFunctio
             },
         });
         return res.status(200).json(data);
-    } catch (err) {
-        next(err);
+    } catch (err:any) {
+        return res.status(500).json({
+            error: err.message
+        })
     }
 };
 
 
-export const insertQuestion = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const insertQuestion = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
     return prisma.$transaction(async (tx) => {
         const { question, exam_id, choices } = body;
@@ -102,7 +104,7 @@ export const insertQuestion = async (req: Request, res: Response, next: NextFunc
     });
 }
 
-export const updateQuestion = async (req: Request, res: Response): Promise<any> => {
+export const updateQuestion = async (req: Request, res: Response): Promise<Response> => {
     const body = req.body;
     return prisma.$transaction(async (tx) => {
         const { question, question_id, choices } = body;
@@ -202,7 +204,7 @@ export const updateQuestion = async (req: Request, res: Response): Promise<any> 
     });
 }
 
-export const deleteQuestion = (req: Request, res: Response): Promise<any> => {
+export const deleteQuestion = (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
         const question = await tx.question.findFirst({

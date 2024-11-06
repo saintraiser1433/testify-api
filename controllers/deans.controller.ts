@@ -3,7 +3,7 @@ import prisma from '../prisma/prisma';
 import { deansValidation } from '../util/validation';
 
 
-export const getDeans = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getDeans = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     try {
         const data = await prisma.deans.findMany({
             select: {
@@ -38,7 +38,7 @@ export const getDeans = async (req: Request, res: Response, next: NextFunction):
 };
 
 
-export const insertDeans = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const insertDeans = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
     return prisma.$transaction(async (tx) => {
         const { error, value } = deansValidation.insert(body);
@@ -87,7 +87,7 @@ export const insertDeans = async (req: Request, res: Response, next: NextFunctio
     });
 }
 
-export const updatedDeans = async (req: Request, res: Response): Promise<any> => {
+export const updatedDeans = async (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id;
     const body = req.body;
     return prisma.$transaction(async (tx) => {
@@ -126,7 +126,7 @@ export const updatedDeans = async (req: Request, res: Response): Promise<any> =>
     });
 }
 
-export const deleteDeans = (req: Request, res: Response): Promise<any> => {
+export const deleteDeans = (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
         const course = await tx.course.findFirst({
@@ -155,7 +155,7 @@ export const deleteDeans = (req: Request, res: Response): Promise<any> => {
 }
 
 //assigned Deans
-export const assignDeans = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const assignDeans = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
     try {
         const response = await prisma.assignDeans.create({
@@ -172,7 +172,7 @@ export const assignDeans = async (req: Request, res: Response, next: NextFunctio
     }
 }
 
-export const getAssignDeans = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getAssignDeans = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const id = req.params.id;
     try {
         const data = await prisma.assignDeans.findMany({
@@ -202,7 +202,7 @@ export const getAssignDeans = async (req: Request, res: Response, next: NextFunc
     }
 };
 
-export const deleteAssignDeans = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const deleteAssignDeans = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const deansId = req.params.deansId;
     const courseId = req.params.courseId
     try {

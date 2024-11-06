@@ -1,19 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-
-export const authenticateToken = (req: Request, res: Response, next: NextFunction): any => {
+import prisma from '../prisma/prisma';
+import { validateAccesToken } from '../services/authService.services';
+import { DecodedPayload } from '../models';
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    try {
+        if (!token) {
+            return res.status(401).json({ message: 'No token found' });
+        }
 
-    if (!token) {
-        return res.status(401).json({ message: 'No token found' });
+        const decoded = validateAccesToken(token) as DecodedPayload;
+        const tokenizer = await prisma.user.findFirst({
+            where: {
+                id: decoded.id,
+                accessToken: token
+            }
+        })
+        if (!tokenizer) {
+            return res.status(401).json({ message: 'Undefined token detected', status: 'unauthenticated' });
+        }
+        next();
+    } catch (err) {
+        return res.status(401).json({ message: 'Session expired', status: 'unauthenticated' });
     }
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ message: 'Session is expired or invalid token' });
-        }
-        // req.user = decoded;
-        next();
-    });
+
 };

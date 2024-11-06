@@ -3,7 +3,7 @@ import prisma from '../prisma/prisma';
 import { examValidation } from '../util/validation';
 
 
-export const getExam = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getExam = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     try {
         const data = await prisma.exam.findMany({
             select: {
@@ -19,12 +19,14 @@ export const getExam = async (req: Request, res: Response, next: NextFunction): 
             },
         });
         return res.status(200).json(data);
-    } catch (err) {
-        next(err);
+    } catch (err:any) {
+        return res.status(500).json({
+            error: err.message
+        })
     }
 };
 
-export const getExamId = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getExamId = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const id = req.params.id;
     try {
         const response = await prisma.exam.findFirstOrThrow({
@@ -33,13 +35,15 @@ export const getExamId = async (req: Request, res: Response, next: NextFunction)
             },
         });
         return res.status(200).json(response);
-    } catch (err) {
-        next(err);
+    } catch (err:any) {
+        return res.status(500).json({
+            error: err.message
+        })
     }
 };
 
 
-export const insertExam = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const insertExam = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
     return prisma.$transaction(async (tx) => {
         const { error, value } = examValidation.update(body);
@@ -74,7 +78,7 @@ export const insertExam = async (req: Request, res: Response, next: NextFunction
     });
 }
 
-export const updateExam = async (req: Request, res: Response): Promise<any> => {
+export const updateExam = async (req: Request, res: Response): Promise<Response> => {
     const body = req.body;
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
@@ -114,7 +118,7 @@ export const updateExam = async (req: Request, res: Response): Promise<any> => {
     });
 }
 
-export const deleteExam = (req: Request, res: Response): Promise<any> => {
+export const deleteExam = (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
         const exam = await tx.exam.findFirst({

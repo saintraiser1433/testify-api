@@ -13,3 +13,7 @@ export const validateToken = (token: string) => {
     return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET as string);
 }
 
+export const validateAccesToken = (token: string) => {
+    return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string);
+}
+

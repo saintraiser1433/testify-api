@@ -4,7 +4,7 @@ import { generateAccessToken, generateRefreshToken, validateToken } from '../ser
 import bcrypt from 'bcrypt'
 import { DecodedPayload } from '../models';
 
-export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const { email, password } = req.body;
     try {
         if (!email || !password) {
@@ -55,7 +55,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
 }
 
 
-export const signup = async (req: Request, res: Response): Promise<any> => {
+export const signup = async (req: Request, res: Response): Promise<Response> => {
     const { email, password } = req.body;
 
     try {
@@ -86,7 +86,7 @@ export const signup = async (req: Request, res: Response): Promise<any> => {
     }
 };
 
-export const signOut = async (req: Request, res: Response): Promise<any> => {
+export const signOut = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.body;
     await prisma.user.update({
         where: {
@@ -103,36 +103,9 @@ export const signOut = async (req: Request, res: Response): Promise<any> => {
 
 
 
-// export const verifyToken = (req: Request, res: Response): any => {
-//     const authHeader = req.headers['authorization'];
-//     const token = authHeader && authHeader.split(' ')[1];
-
-//     if (!token) {
-//         return res.status(401).json({ user: {}, message: 'No Token provided', status: 'unauthenticated' });
-//     }
-
-//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, async (err, decoded) => {
-//         if (err) {
-//             return res.status(403).json({ user: {}, message: 'Session expired or invalid token', status: 'unauthenticated' });
-//         }
-//         const { id } = decoded as DecodedPayload;
-//         const user = await prisma.user.findFirst({
-//             where: {
-//                 id: id,
-//                 accessToken: token
-//             }
-//         });
-//         if (!user) {
-//             return res.status(401).json({ user: {}, message: 'Invalid token or user not found', status: 'unauthenticated' });
-//         }
-//         return res.status(200).json({ user: user, status: 'authenticated' });
-//     });
-// }
 
 
-
-
-export const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) {
