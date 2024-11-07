@@ -66,7 +66,7 @@ export const insertCourse = async (req: Request, res: Response, next: NextFuncti
 
             if (course) {
                 return res.status(409).json({
-                    message: "Course already exist",
+                    error: "Course already exist",
 
                 })
             }

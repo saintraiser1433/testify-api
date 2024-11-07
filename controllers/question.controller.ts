@@ -50,7 +50,7 @@ export const getQuestion = async (req: Request, res: Response, next: NextFunctio
 export const insertQuestion = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
     return prisma.$transaction(async (tx) => {
-        const { question, exam_id, choices } = body;
+        const { question, exam_id, Choices } = body;
 
         const questBody = {
             question: question,
@@ -80,7 +80,7 @@ export const insertQuestion = async (req: Request, res: Response, next: NextFunc
             data: value,
         });
 
-        const choiceBody = choices.map((choice: ChoicesModel) => ({
+        const choiceBody = Choices.map((choice: ChoicesModel) => ({
             description: choice.description,
             question_id: response.question_id,
             status: choice.status,
@@ -107,7 +107,7 @@ export const insertQuestion = async (req: Request, res: Response, next: NextFunc
 export const updateQuestion = async (req: Request, res: Response): Promise<Response> => {
     const body = req.body;
     return prisma.$transaction(async (tx) => {
-        const { question, question_id, choices } = body;
+        const { question, question_id, Choices } = body;
         const questBody = {
             question: question,
             question_id: question_id,
@@ -139,7 +139,7 @@ export const updateQuestion = async (req: Request, res: Response): Promise<Respo
 
         //choices validate
         const { error: errorChoice, value: choicesValue } =
-            choicesValidation.update(choices);
+            choicesValidation.update(Choices);
 
         // Check for validation errors
         if (errorChoice) {
@@ -155,7 +155,7 @@ export const updateQuestion = async (req: Request, res: Response): Promise<Respo
         });
 
         //end
-        const newChoiceId = choices.map(
+        const newChoiceId = Choices.map(
             (choice: ChoicesModel) => choice.choices_id
         );
 

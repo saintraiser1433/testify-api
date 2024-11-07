@@ -84,8 +84,6 @@ model Choices {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   Answers      Answers[]
-
-  @@map("choices")
 }
 
 model Answers {

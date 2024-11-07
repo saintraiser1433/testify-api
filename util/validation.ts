@@ -133,6 +133,7 @@ export const examValidation = {
                 "number.min": `Question Limit cannot be empty`,
             }),
             exam_id: Joi.number().min(1).empty().optional(),
+            status: Joi.boolean().optional(),
         });
         return schema.validate(data);
     },
