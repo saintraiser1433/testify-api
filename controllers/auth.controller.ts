@@ -8,7 +8,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
     const { email, password } = req.body;
     try {
         if (!email || !password) {
-            return res.status(400).json({ error: 'Please provide email and password ' });
+            return res.status(401).json({ error: 'Please provide email and password ' });
         }
         const user = await prisma.user.findUnique({
             where: {
@@ -21,7 +21,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
             const isCorrect = await bcrypt.compare(password, user.password)
 
             if (!isCorrect) {
-                return res.status(400).json({ error: 'Incorrect Credentials' });
+                return res.status(401).json({ error: 'Incorrect Credentials' });
             }
             const users: DecodedPayload = {
                 id: user.id,
@@ -43,10 +43,10 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
             return res.status(201).json({ token: { accessToken, refreshToken } });
 
         }
-        return res.status(400).json({ error: 'Incorrect Credentials' });
+        return res.status(401).json({ error: 'Incorrect Credentials' });
 
     } catch (err: any) {
-        return res.status(500).json({
+        return res.status(401).json({
             error: err.message
         })
     }

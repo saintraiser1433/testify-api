@@ -4,8 +4,32 @@ import { examineeValidation } from '../util/validation';
 
 
 export const getExaminee = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
+    const { q, _page, _limit, _sort, _order } = req.query; //{ q: '', _page: '1', _limit: '5', _sort: 'id', _order: 'asc' }
+
     try {
+        const page = parseInt(_page as string, 10);
+        const limit = parseInt(_limit as string, 10);
+        const skip = (page - 1) * limit;
+
+
+        const totalItems = await prisma.examinee.count({
+            where: {
+                OR: [
+                    { first_name: { contains: q as string, mode: 'insensitive' } },
+                    { last_name: { contains: q as string, mode: 'insensitive' } },
+                ]
+            }
+        });
+
+        const totalPages = Math.ceil(totalItems / limit);
+
         const data = await prisma.examinee.findMany({
+            where: {
+                OR: [
+                    { first_name: { contains: q as string, mode: 'insensitive' } },
+                    { last_name: { contains: q as string, mode: 'insensitive' } },
+                ]
+            },
             select: {
                 examinee_id: true,
                 first_name: true,
@@ -14,10 +38,16 @@ export const getExaminee = async (req: Request, res: Response, next: NextFunctio
                 username: true,
             },
             orderBy: {
-                examinee_id: "asc",
+                [_sort as any]: _order as 'asc' | 'desc'
             },
+            skip,
+            take: limit
+
         });
-        return res.status(200).json(data);
+        return res.status(200).json({
+            data,
+            totalPages
+        });
     } catch (err: any) {
         return res.status(500).json({
             error: err.message
