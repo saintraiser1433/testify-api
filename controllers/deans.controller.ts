@@ -106,9 +106,24 @@ export const updatedDeans = async (req: Request, res: Response): Promise<Respons
             },
         });
 
+
+
         if (!deans) {
             return res.status(400).json({
                 error: "Deans not found",
+            })
+
+        }
+
+        const checkAssociateDept = await tx.deans.findFirst({
+            where: {
+                department_id: Number(value.department_id),
+            },
+        });
+
+        if (checkAssociateDept) {
+            return res.status(409).json({
+                error: "Already taken department",
             })
 
         }

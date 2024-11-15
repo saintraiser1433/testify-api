@@ -10,7 +10,6 @@ export const getExam = async (req: Request, res: Response, next: NextFunction): 
                 exam_id: true,
                 description: true,
                 exam_title: true,
-                question_limit: true,
                 status: true,
                 time_limit: true,
             },
