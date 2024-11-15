@@ -27,36 +27,43 @@ export const getDepartment = async (req: Request, res: Response, next: NextFunct
 
 export const insertDepartment = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
-    return prisma.$transaction(async (tx) => {
-        const { error, value } = departmentValidation.validate(body);
+    try {
+        const data = prisma.$transaction(async (tx) => {
+            const { error, value } = departmentValidation.validate(body);
 
-        if (error) {
-            return res.status(400).json({
-                error: error.details[0].message,
+            if (error) {
+                return res.status(400).json({
+                    error: error.details[0].message,
+                })
+            }
+
+            const department = await tx.department.findFirst({
+                where: {
+                    department_name: value.department_name,
+                },
+            });
+
+            if (department) {
+                return res.status(409).json({
+                    error: "Department already exist",
+                })
+            }
+
+            const response = await tx.department.create({
+                data: value,
+            });
+            return res.status(201).json({
+                message: "Department created successfully",
+                data: response,
             })
-        }
-
-        const department = await tx.department.findFirst({
-            where: {
-                department_name: value.department_name,
-            },
         });
-
-        if (department) {
-            return res.status(409).json({
-                error: "Department already exist",
-            })
-        }
-
-        const response = await tx.department.create({
-            data: value,
+        return data;
+    } catch (err:any) {
+        return res.status(500).json({
+            error: err.message
         });
-        return res.status(201).json({
-            message: "Department created successfully",
-            data: response,
-        })
+    }
 
-    });
 }
 
 export const updateDepartment = async (req: Request, res: Response): Promise<Response> => {
