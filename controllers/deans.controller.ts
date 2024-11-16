@@ -193,11 +193,8 @@ export const getAssignDeans = async (req: Request, res: Response, next: NextFunc
     try {
         const data = await prisma.assignDeans.findMany({
             select: {
-                deans: {
-                    select: {
-                        deans_id: true,
-                    },
-                },
+                deans_id:true,
+                course_id:true,
                 course: {
                     select: {
                         course_id: true,
