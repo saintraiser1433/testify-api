@@ -13,6 +13,7 @@ export const getDeans = async (req: Request, res: Response, next: NextFunction):
                 middle_name: true,
                 username: true,
                 status: true,
+                department_id:true,
                 department: {
                     select: {
                         department_id: true,
