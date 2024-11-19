@@ -16,30 +16,23 @@ datasource db {
 //local provider
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique @db.VarChar(100)
-  password     String   @db.VarChar(100)
+  id           String        @id @default(cuid())
+  first_name   String        @db.VarChar(100)
+  last_name    String        @db.VarChar(100)
+  middle_name  String        @db.VarChar(100)
+  email        String?       @db.VarChar(100)
+  username     String        @db.VarChar(100)
+  password     String        @db.VarChar(100)
   accessToken  String?
   refreshToken String?
   role         String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  Answers      Answers[]
+  ExamAttempt  ExamAttempt[]
 }
 
 //suggested prisma authentication model
-
-model Examinee {
-  examinee_id Int           @id @default(autoincrement())
-  first_name  String        @db.VarChar(100)
-  last_name   String        @db.VarChar(100)
-  middle_name String        @db.VarChar(100)
-  username    String        @db.VarChar(100)
-  password    String        @db.VarChar(100)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  Answers     Answers[]
-  ExamAttempt ExamAttempt[]
-}
 
 model Course {
   course_id   Int           @id @default(autoincrement())
@@ -51,16 +44,16 @@ model Course {
 }
 
 model Exam {
-  exam_id        Int           @id @default(autoincrement())
-  exam_title     String        @db.VarChar(150)
-  description    String        @db.VarChar(255)
-  time_limit     Int
-  status         Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  Question       Question[]
-  Answers        Answers[]
-  ExamAttempt    ExamAttempt[]
+  exam_id     Int           @id @default(autoincrement())
+  exam_title  String        @db.VarChar(150)
+  description String        @db.VarChar(255)
+  time_limit  Int
+  status      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Question    Question[]
+  Answers     Answers[]
+  ExamAttempt ExamAttempt[]
 }
 
 model Question {
@@ -86,11 +79,11 @@ model Choices {
 }
 
 model Answers {
-  examineeList Examinee @relation(fields: [examinee_id], references: [examinee_id])
+  examineeList User     @relation(fields: [examinee_id], references: [id])
   examList     Exam     @relation(fields: [exam_id], references: [exam_id])
   questionList Question @relation(fields: [question_id], references: [question_id])
   choicesList  Choices  @relation(fields: [choices_id], references: [choices_id])
-  examinee_id  Int
+  examinee_id  String
   exam_id      Int
   question_id  Int
   choices_id   Int
@@ -101,8 +94,8 @@ model Answers {
 }
 
 model ExamAttempt {
-  examineeList Examinee @relation(fields: [examinee_id], references: [examinee_id])
-  examinee_id  Int
+  examineeList User     @relation(fields: [examinee_id], references: [id])
+  examinee_id  String
   examList     Exam     @relation(fields: [exam_id], references: [exam_id])
   exam_id      Int
   createdAt    DateTime @default(now())

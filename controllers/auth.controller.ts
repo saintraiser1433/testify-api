@@ -5,27 +5,40 @@ import bcrypt from 'bcrypt'
 import { DecodedPayload } from '../models';
 
 export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
     try {
-        if (!email || !password) {
+        if (!username || !password) {
             return res.status(401).json({ error: 'Please provide email and password ' });
         }
-        const user = await prisma.user.findUnique({
+        const user = await prisma.user.findFirst({
             where: {
-                email: email,
-            },
+                OR: [
 
+                    {
+                        username: username
+                    },
+                    {
+                        email: username
+                    },
+                ]
+            }
         })
+
+
         if (user) {
 
-            const isCorrect = await bcrypt.compare(password, user.password)
+            // const isCorrect = await bcrypt.compare(password, user.password)
 
-            if (!isCorrect) {
+
+            if (password !== user.password) {
                 return res.status(401).json({ error: 'Incorrect Credentials' });
             }
             const users: DecodedPayload = {
                 id: user.id,
                 email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                middle_name: user.middle_name,
                 role: user.role
             }
             const accessToken = generateAccessToken(users)
@@ -43,7 +56,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
             return res.status(201).json({ token: { accessToken, refreshToken } });
 
         }
-        return res.status(401).json({ error: 'Incorrect Credentials' });
+        return res.status(401).json({ error: 'Incorrect Credentialss' });
 
     } catch (err: any) {
         return res.status(401).json({
@@ -56,17 +69,26 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
 
 
 export const signup = async (req: Request, res: Response): Promise<Response> => {
-    const { email, password } = req.body;
+    const { username, first_name, last_name, middle_name, password } = req.body;
 
     try {
 
-        if (!email || !password) {
+        if (!username || !password) {
             return res.status(401).json({ error: "Please provide email and password" });
         }
         const hashPass = await bcrypt.hash(password, 10);
 
-        const checkUser = await prisma.user.findUnique({
-            where: { email }
+        const checkUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    {
+                        email: username
+                    },
+                    {
+                        username: username
+                    },
+                ]
+            }
         });
 
         if (checkUser) {
@@ -75,7 +97,14 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
         }
 
         const user = await prisma.user.create({
-            data: { email, password: hashPass, role: 'examinee' }
+            data: {
+                first_name: first_name,
+                middle_name: middle_name,
+                last_name: last_name,
+                username: username,
+                password: hashPass,
+                role: 'examinee'
+            }
         });
 
         return res.status(201).json(user);
@@ -102,6 +131,33 @@ export const signOut = async (req: Request, res: Response): Promise<Response> =>
 }
 
 
+export const validateTokens = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({
+            error: "No Token Provided "
+        })
+    }
+
+    try {
+        const decoded = validateToken(token) as DecodedPayload;
+        const user = await prisma.user.findFirst({
+            where: {
+                id: decoded.id,
+                accessToken: token
+            }
+        });
+        
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid token or user not found', status: 'unauthenticated' });
+        }
+        return res.status(200).json({ status: 'authenticated' })
+    } catch (err: any) {
+        return res.status(403).json({ message: err.message, status: 'unauthenticated' });
+    }
+
+}
 
 
 
@@ -130,6 +186,9 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
         const users: DecodedPayload = {
             id: user.id,
             email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            middle_name: user.middle_name,
             role: user.role
         };
         const accessToken = generateAccessToken(users);

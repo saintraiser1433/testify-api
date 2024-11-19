@@ -31,16 +31,19 @@ export const examineeValidation = {
             username: Joi.string().min(3).required().messages({
                 "any.required": `Username cannot be null or empty`,
             }),
+
             password: Joi.string().min(3).empty().required().messages({
                 "any.required": `Password cannot be null or empty`,
             }),
+            email: Joi.string().optional(),
+            role: Joi.string().optional()
         });
         return schema.validate(data);
     },
 
     update: (data: ExamineeModel) => {
         const schema = Joi.object({
-            examinee_id: Joi.number().optional(),
+            id: Joi.string().optional(),
             first_name: Joi.string().min(3).empty().optional(),
             last_name: Joi.string().min(3).empty().optional(),
             middle_name: Joi.string().min(3).empty().optional(),

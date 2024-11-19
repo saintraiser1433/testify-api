@@ -5,14 +5,17 @@ import { examineeValidation } from '../util/validation';
 
 export const getExaminee = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     try {
-        const data = await prisma.examinee.findMany({
+        const data = await prisma.user.findMany({
             select: {
-                examinee_id: true,
+                id: true,
                 first_name: true,
                 last_name: true,
                 middle_name: true,
                 username: true,
             },
+            where: {
+                role: 'examinee'
+            }
 
 
         });
@@ -34,13 +37,15 @@ export const insertExaminee = async (req: Request, res: Response, next: NextFunc
                 error: error.details[0].message,
             })
         }
-        const user = await tx.examinee.findFirst({
+        const user = await tx.user.findFirst({
             where: {
                 AND: [
                     { first_name: value.first_name },
                     { last_name: value.last_name },
                     { middle_name: value.middle_name },
+                    { role: 'examinee' }
                 ],
+
             },
         });
 
@@ -51,7 +56,7 @@ export const insertExaminee = async (req: Request, res: Response, next: NextFunc
 
         }
 
-        const response = await tx.examinee.create({
+        const response = await tx.user.create({
             data: value,
         });
         return res.status(201).json({
@@ -74,9 +79,9 @@ export const updateExaminee = async (req: Request, res: Response): Promise<Respo
             })
         }
 
-        const examinee = await tx.examinee.findFirst({
+        const examinee = await tx.user.findFirst({
             where: {
-                examinee_id: Number(id),
+                id: id,
             },
         });
 
@@ -86,9 +91,9 @@ export const updateExaminee = async (req: Request, res: Response): Promise<Respo
             })
         }
 
-        const response = await tx.examinee.update({
+        const response = await tx.user.update({
             where: {
-                examinee_id: Number(id),
+                id: id,
             },
             data: value,
         });
@@ -103,9 +108,9 @@ export const updateExaminee = async (req: Request, res: Response): Promise<Respo
 export const deleteExaminee = (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id;
     return prisma.$transaction(async (tx) => {
-        const examinee = await tx.examinee.findFirst({
+        const examinee = await tx.user.findFirst({
             where: {
-                examinee_id: Number(id),
+                id: id,
             },
         });
 
@@ -115,9 +120,9 @@ export const deleteExaminee = (req: Request, res: Response): Promise<Response> =
             })
         }
 
-        await prisma.examinee.delete({
+        await prisma.user.delete({
             where: {
-                examinee_id: Number(id),
+                id: id,
             },
         });
         return res.status(200).json({
