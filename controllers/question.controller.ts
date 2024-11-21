@@ -41,7 +41,7 @@ export const getQuestion = async (req: Request, res: Response, next: NextFunctio
         return res.status(200).json(data);
     } catch (err:any) {
         return res.status(500).json({
-            error: err.message
+            message: err.message
         })
     }
 };
@@ -60,7 +60,7 @@ export const insertQuestion = async (req: Request, res: Response, next: NextFunc
         const { error: err, value } = questionValidation.insert(questBody);
         if (err) {
             return res.status(400).json({
-                error: err.details[0].message,
+                message: err.details[0].message,
             })
         }
 
@@ -72,7 +72,7 @@ export const insertQuestion = async (req: Request, res: Response, next: NextFunc
 
         if (!checkExamIsExist) {
             return res.status(404).json({
-                error: "Exam not found",
+                message: "Exam not found",
             })
         }
 
@@ -116,7 +116,7 @@ export const updateQuestion = async (req: Request, res: Response): Promise<Respo
         const { error: err, value } = questionValidation.update(questBody);
         if (err) {
             return res.status(400).json({
-                error: err.details[0].message,
+                message: err.details[0].message,
             })
 
         }
@@ -131,7 +131,7 @@ export const updateQuestion = async (req: Request, res: Response): Promise<Respo
 
         if (!checkQuestionIsExist) {
             return res.status(404).json({
-                error: "Question not found",
+                message: "Question not found",
             })
 
         }
@@ -144,7 +144,7 @@ export const updateQuestion = async (req: Request, res: Response): Promise<Respo
         // Check for validation errors
         if (errorChoice) {
             return res.status(400).json({
-                error: errorChoice.details[0].message,
+                message: errorChoice.details[0].message,
             })
         }
 
@@ -215,7 +215,7 @@ export const deleteQuestion = (req: Request, res: Response): Promise<Response> =
 
         if (!question) {
             return res.status(404).json({
-                error: "Question not found",
+                message: "Question not found",
             })
         }
 

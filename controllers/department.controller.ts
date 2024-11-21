@@ -18,7 +18,7 @@ export const getDepartment = async (req: Request, res: Response, next: NextFunct
         return res.status(200).json(data);
     } catch (err: any) {
         return res.status(500).json({
-            error: err.message
+            message: err.message
         });
 
     }
@@ -33,7 +33,7 @@ export const insertDepartment = async (req: Request, res: Response, next: NextFu
 
             if (error) {
                 return res.status(400).json({
-                    error: error.details[0].message,
+                    message: error.details[0].message,
                 })
             }
 
@@ -45,7 +45,7 @@ export const insertDepartment = async (req: Request, res: Response, next: NextFu
 
             if (department) {
                 return res.status(409).json({
-                    error: "Department already exist",
+                    message: "Department already exist",
                 })
             }
 
@@ -60,7 +60,7 @@ export const insertDepartment = async (req: Request, res: Response, next: NextFu
         return data;
     } catch (err:any) {
         return res.status(500).json({
-            error: err.message
+            message: err.message
         });
     }
 
@@ -74,7 +74,7 @@ export const updateDepartment = async (req: Request, res: Response): Promise<Res
 
         if (error) {
             return res.status(400).json({
-                error: error.details[0].message,
+                message: error.details[0].message,
             })
         }
 
@@ -86,7 +86,7 @@ export const updateDepartment = async (req: Request, res: Response): Promise<Res
 
         if (!department) {
             return res.status(404).json({
-                error: "Department not found",
+                message: "Department not found",
             })
         }
 
@@ -114,7 +114,7 @@ export const deleteDepartment = (req: Request, res: Response): Promise<Response>
 
         if (!department) {
             return res.status(404).json({
-                error: "Department not found",
+                message: "Department not found",
             })
         }
 

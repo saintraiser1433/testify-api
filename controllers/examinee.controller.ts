@@ -22,7 +22,7 @@ export const getExaminee = async (req: Request, res: Response, next: NextFunctio
         return res.status(200).json(data);
     } catch (err: any) {
         return res.status(500).json({
-            error: err.message
+            message: err.message
         })
     }
 };
@@ -34,7 +34,7 @@ export const insertExaminee = async (req: Request, res: Response, next: NextFunc
         const { error, value } = examineeValidation.insert(body);
         if (error) {
             return res.status(400).json({
-                error: error.details[0].message,
+                message: error.details[0].message,
             })
         }
         const user = await tx.user.findFirst({
@@ -51,7 +51,7 @@ export const insertExaminee = async (req: Request, res: Response, next: NextFunc
 
         if (user) {
             return res.status(409).json({
-                error: "Student already exist",
+                message: "Student already exist",
             })
 
         }
@@ -75,7 +75,7 @@ export const updateExaminee = async (req: Request, res: Response): Promise<Respo
 
         if (error) {
             return res.status(400).json({
-                error: error.details[0].message,
+                message: error.details[0].message,
             })
         }
 
@@ -87,7 +87,7 @@ export const updateExaminee = async (req: Request, res: Response): Promise<Respo
 
         if (!examinee) {
             return res.status(409).json({
-                error: "Student already exist",
+                message: "Student already exist",
             })
         }
 

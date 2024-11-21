@@ -33,7 +33,7 @@ export const getDeans = async (req: Request, res: Response, next: NextFunction):
         return res.status(200).json(data);
     } catch (err: any) {
         return res.status(500).json({
-            error: err.message,
+            message: err.message,
         });
     }
 };
@@ -46,7 +46,7 @@ export const insertDeans = async (req: Request, res: Response, next: NextFunctio
 
         if (error) {
             return res.status(400).json({
-                error: error.details[0].message,
+                message: error.details[0].message,
             })
 
         }
@@ -59,7 +59,7 @@ export const insertDeans = async (req: Request, res: Response, next: NextFunctio
 
         if (deans) {
             return res.status(409).json({
-                error: "This deans already existing",
+                message: "This deans already existing",
             })
 
         }
@@ -72,7 +72,7 @@ export const insertDeans = async (req: Request, res: Response, next: NextFunctio
 
         if (checkAssociateDept) {
             return res.status(409).json({
-                error: "Already taken department",
+                message: "Already taken department",
             })
 
         }
@@ -96,7 +96,7 @@ export const updatedDeans = async (req: Request, res: Response): Promise<Respons
 
         if (error) {
             return res.status(400).json({
-                error: error.details[0].message,
+                message: error.details[0].message,
             })
 
         }
@@ -111,7 +111,7 @@ export const updatedDeans = async (req: Request, res: Response): Promise<Respons
 
         if (!deans) {
             return res.status(400).json({
-                error: "Deans not found",
+                message: "Deans not found",
             })
 
         }
@@ -124,7 +124,7 @@ export const updatedDeans = async (req: Request, res: Response): Promise<Respons
 
         if (checkAssociateDept) {
             return res.status(409).json({
-                error: "Already taken department",
+                message: "Already taken department",
             })
 
         }
@@ -153,7 +153,7 @@ export const deleteDeans = (req: Request, res: Response): Promise<Response> => {
 
         if (!course) {
             return res.status(404).json({
-                error: "Course not found",
+                message: "Course not found",
             })
 
         }
@@ -164,7 +164,7 @@ export const deleteDeans = (req: Request, res: Response): Promise<Response> => {
             },
         });
         return res.status(201).json({
-            error: "Course deleted successfully",
+            message: "Course deleted successfully",
         })
 
     });
@@ -183,7 +183,7 @@ export const assignDeans = async (req: Request, res: Response, next: NextFunctio
         })
     } catch (err: any) {
         return res.status(500).json({
-            error: err.message,
+            message: err.message,
         });
     }
 }
@@ -210,7 +210,7 @@ export const getAssignDeans = async (req: Request, res: Response, next: NextFunc
         return res.status(200).json(data);
     } catch (err: any) {
         return res.status(500).json({
-            error: err.message,
+            message: err.message,
         });
     }
 };
@@ -234,7 +234,7 @@ export const deleteAssignDeans = async (req: Request, res: Response, next: NextF
         })
     } catch (err: any) {
         return res.status(500).json({
-            error: err.message,
+            message: err.message,
         });
     }
 }

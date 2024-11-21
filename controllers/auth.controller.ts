@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../prisma/prisma';
-import { generateAccessToken, generateRefreshToken, validateToken } from '../services/authService.services';
+import { generateAccessToken, generateRefreshToken, validateRefreshToken } from '../services/authService.services';
 import bcrypt from 'bcrypt'
 import { DecodedPayload } from '../models';
 
@@ -60,7 +60,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
 
     } catch (err: any) {
         return res.status(401).json({
-            error: err.message
+            message: err.message
         })
     }
 
@@ -110,7 +110,7 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
         return res.status(201).json(user);
 
     } catch (err: any) {
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ message: err.message });
 
     }
 };
@@ -131,47 +131,18 @@ export const signOut = async (req: Request, res: Response): Promise<Response> =>
 }
 
 
-export const validateTokens = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({
-            error: "No Token Provided "
-        })
-    }
-
-    try {
-        const decoded = validateToken(token) as DecodedPayload;
-        const user = await prisma.user.findFirst({
-            where: {
-                id: decoded.id,
-                accessToken: token
-            }
-        });
-        
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid token or user not found', status: 'unauthenticated' });
-        }
-        return res.status(200).json({ status: 'authenticated' })
-    } catch (err: any) {
-        return res.status(403).json({ message: err.message, status: 'unauthenticated' });
-    }
-
-}
-
-
 
 export const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) {
         return res.status(401).json({
-            error: "No Token Provided "
+            message: "No Token Provided "
         })
     }
 
     try {
-        const decoded = validateToken(token) as DecodedPayload;
+        const decoded = validateRefreshToken(token) as DecodedPayload;
         const user = await prisma.user.findFirst({
             where: {
                 id: decoded.id,
