@@ -58,7 +58,7 @@ model Exam {
 
 model Question {
   question_id Int       @id @default(autoincrement())
-  question    String    @db.VarChar(255)
+  question    String
   examList    Exam      @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade, onUpdate: Cascade)
   exam_id     Int
   createdAt   DateTime  @default(now())
@@ -71,7 +71,7 @@ model Choices {
   choices_id   Int       @id @default(autoincrement())
   questionList Question  @relation(fields: [question_id], references: [question_id], onDelete: Cascade, onUpdate: Cascade)
   question_id  Int
-  description  String    @db.VarChar(255)
+  description  String
   status       Boolean
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

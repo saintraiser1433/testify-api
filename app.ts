@@ -10,7 +10,7 @@ const PORT = process.env.APP_PORT || 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 app.use('/api/v1', router)
-app.use('/uploads', express.static('uploads')); //for static directory
+app.use('/uploads', express.static('public/uploads')); //for static directory
 
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({
