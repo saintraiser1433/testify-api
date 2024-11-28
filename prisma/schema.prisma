@@ -30,6 +30,7 @@ model User {
   updatedAt    DateTime      @updatedAt
   Answers      Answers[]
   ExamAttempt  ExamAttempt[]
+  FollowUp     FollowUp[]
 }
 
 //suggested prisma authentication model
@@ -136,4 +137,17 @@ model AssignDeans {
   updatedAt DateTime @updatedAt
 
   @@id([deans_id, course_id])
+}
+
+model FollowUp {
+  examinee       User   @relation(fields: [examineeId], references: [id])
+  examineeId     String @db.VarChar(100)
+  gender         String @db.VarChar(50)
+  birth_date     String @db.VarChar(50)
+  contact_number String @db.VarChar(50)
+  school         String
+  email          String @db.VarChar(100)
+  address        String
+
+  @@id([examineeId])
 }

@@ -131,3 +131,19 @@ export const deleteExaminee = (req: Request, res: Response): Promise<Response> =
     });
 }
 
+
+export const insertFollowUp = async (req: Request, res: Response): Promise<Response> => {
+    const body = req.body;
+    try {
+        const examinee = await prisma.followUp.create({
+            data: body
+        })
+        return res.status(200).json(examinee);
+    } catch (err: any) {
+        return res.status(500).json({
+            message: err.message,
+        });
+    }
+
+
+} 
