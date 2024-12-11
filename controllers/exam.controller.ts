@@ -147,3 +147,60 @@ export const deleteExam = (req: Request, res: Response): Promise<Response> => {
     });
 }
 
+
+export const checkIfExamFinished = async (req: Request, res: Response): Promise<Response> => {
+    const id = req.params.id;
+
+    const data = await prisma.examAttempt.findMany({
+        select: {
+            exam_id: true
+        },
+        where: {
+            examinee_id: id
+        }
+    });
+    const examId = data.map(item => item.exam_id);
+
+    const exam = await prisma.exam.findMany({
+        select: {
+            exam_id: true,
+        },
+        where: {
+            exam_id: {
+                notIn: examId
+            }
+        },
+
+    })
+
+    const shuffledExam = exam.sort(() => Math.random() - 0.5)[0];
+    // console.log(exam);
+    return res.status(200).json(shuffledExam);
+
+}
+
+export const checkExamAvailable = async (req: Request, res: Response): Promise<Response> => {
+    const id = req.params.examId;
+
+    const data = await prisma.question.findMany({
+        select: {
+            question: true,
+            question_id: true,
+            Choices: {
+                select: {
+                    choices_id: true,
+                    description: true
+                }
+            }
+        },
+        where: {
+            examList: {
+                exam_id: Number(id)
+            }
+
+        }
+    })
+    return res.status(200).json(data);
+
+}
+

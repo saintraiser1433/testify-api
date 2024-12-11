@@ -130,7 +130,7 @@ model Deans {
 
 model AssignDeans {
   deans     Deans    @relation(fields: [deans_id], references: [deans_id])
-  deans_id  Int
+  deans_id  Int      @db.Integer
   course    Course   @relation(fields: [course_id], references: [course_id])
   course_id Int
   createdAt DateTime @default(now())
@@ -144,7 +144,7 @@ model FollowUp {
   examineeId     String @db.VarChar(100)
   gender         String @db.VarChar(50)
   birth_date     String @db.VarChar(50)
-  contact_number String @db.VarChar(50)
+  contact_number String @db.VarChar(13)
   school         String
   email          String @db.VarChar(100)
   address        String
