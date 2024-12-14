@@ -8,6 +8,7 @@ import question from './question.route';
 import auth from './auth.route'
 import fileUpload from './file.route'
 import followup from './followup.route'
+import answer from './answer.route';
 const router = Router();
 router.use('/auth', auth)
 router.use('/exam', exam);
@@ -18,5 +19,7 @@ router.use('/course', course);
 router.use('/deans', deans);
 router.use('/followup', followup);
 router.use('/file', fileUpload);
+router.use('/answer', answer)
+
 
 export default router;
