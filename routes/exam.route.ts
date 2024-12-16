@@ -18,7 +18,7 @@ const route = Router();
 route.get('/', authenticateToken, getExam);
 route.get('/:id', authenticateToken, getExamId);
 route.get('/existing/:id', authenticateToken, checkIfExamFinished);
-route.get('/available/:examId', authenticateToken, checkExamAvailable);
+route.get('/available/:examineeId', authenticateToken, checkExamAvailable);
 route.post('/', authenticateToken, insertExam);
 route.put('/:id', authenticateToken, updateExam);
 route.delete('/:id', authenticateToken, deleteExam)

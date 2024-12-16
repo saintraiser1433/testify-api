@@ -162,8 +162,16 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
             middle_name: user.middle_name,
             role: user.role
         };
-        const accessToken = generateAccessToken(users);
 
+        const accessToken = generateAccessToken(users);
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                accessToken: accessToken,
+            }
+        })
         return res.status(200).json({ accessToken, status: 'authenticated' });
 
     } catch (err) {

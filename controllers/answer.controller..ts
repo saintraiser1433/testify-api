@@ -1,12 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../prisma/prisma';
+import { answerModel } from '../models';
 
-interface answerModel {
-    examinee_id:string,
-    exam_id:number,
-    choices_id:number,
-    question_id:number
-}
+
 
 export const insertAnswer = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const body = req.body;
@@ -62,5 +58,15 @@ export const insertAnswer = async (req: Request, res: Response, next: NextFuncti
 
 }
 
+
+// export const getTotalScore = async(req:Request,res:Response) : Promise<Response> => {
+//     const id = req.params.examineeId;
+
+//     try{
+//         const response = await prisma.
+//     }catch(err:any){
+
+//     }
+// }
 
 

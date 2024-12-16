@@ -128,6 +128,13 @@ export interface DecodedPayload {
 
 }
 
+export interface answerModel {
+    examinee_id:string,
+    exam_id:number,
+    choices_id:number,
+    question_id:number
+}
+
 
 declare module 'express' {
     interface Request {

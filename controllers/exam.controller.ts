@@ -173,19 +173,59 @@ export const checkIfExamFinished = async (req: Request, res: Response): Promise<
 
     })
 
-    const shuffledExam = exam.sort(() => Math.random() - 0.5)[0];
-    // console.log(exam);
+    const shuffledExam = exam.sort(() => Math.random() - 0.5);
+
     return res.status(200).json(shuffledExam);
 
 }
 
 export const checkExamAvailable = async (req: Request, res: Response): Promise<Response> => {
-    const id = req.params.examId;
+    const id = req.params.examineeId;
+
+
+    if (!id) {
+        return res.status(400).json({
+            message: 'Invalid examinee ID'
+        });
+    }
+    const attemptData = await prisma.examAttempt.findMany({
+        select: {
+            exam_id: true
+        },
+        where: {
+            examinee_id: id
+        }
+    });
+
+
+    const attemptedExamIds = attemptData.map(item => item.exam_id);
+
+    const exam = await prisma.exam.findMany({
+        select: {
+            exam_id: true,
+        },
+        where: {
+            exam_id: {
+                notIn: attemptedExamIds
+            }
+        },
+
+    })
+
+    const shuffledExam = exam.sort(() => Math.random() - 0.5);
+
+    if (!shuffledExam || shuffledExam.length === 0) {
+        return res.status(400).json({
+            message: 'You have finished the exam'
+        });
+    }
+
 
     const data = await prisma.question.findMany({
         select: {
             question: true,
             question_id: true,
+            exam_id: true,
             Choices: {
                 select: {
                     choices_id: true,
@@ -194,9 +234,7 @@ export const checkExamAvailable = async (req: Request, res: Response): Promise<R
             }
         },
         where: {
-            examList: {
-                exam_id: Number(id)
-            }
+            exam_id: Number(shuffledExam[0].exam_id)
 
         }
     })

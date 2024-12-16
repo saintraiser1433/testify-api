@@ -17,7 +17,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
                 accessToken: token
             }
         })
-        console.log(tokenizer);
+
         if (!tokenizer) {
             return res.status(401).json({ message: 'Undefined token detected', status: 'unauthenticated' });
         }
