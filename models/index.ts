@@ -129,10 +129,35 @@ export interface DecodedPayload {
 }
 
 export interface answerModel {
-    examinee_id:string,
-    exam_id:number,
-    choices_id:number,
-    question_id:number
+    examinee_id: string,
+    exam_id: number,
+    choices_id: number,
+    question_id: number
+}
+
+export interface TotalScoreResult {
+    total_questions: number;
+    total_correct_answers: number;
+    examcnt: number,
+    examAttempt: number
+}
+
+export interface ExamHeader {
+    exam_id: number;
+    time_limit: number;
+    exam_title: string;
+    data: ExamDetailsModel[];
+}
+
+
+export interface ExamDetailsModel {
+    question_id: number,
+    question: string,
+    selectedChoice: null,
+    choices: {
+        value: number,
+        label: string
+    }[];
 }
 
 

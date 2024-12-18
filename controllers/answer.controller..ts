@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../prisma/prisma';
-import { answerModel } from '../models';
+import { answerModel, TotalScoreResult } from '../models';
 
 
 
@@ -58,12 +58,7 @@ export const insertAnswer = async (req: Request, res: Response, next: NextFuncti
 
 }
 
-interface TotalScoreResult {
-    total_questions: number;
-    total_correct_answers: number;
-    examcnt: number,
-    examAttempt: number
-}
+
 export const getTotalScore = async (req: Request, res: Response): Promise<Response> => {
     const id = req.params.examineeId;
 
@@ -94,7 +89,7 @@ export const getTotalScore = async (req: Request, res: Response): Promise<Respon
             total_questions: Number(item.total_questions),
             total_correct_answers: Number(item.total_correct_answers),
             examcnt: Number(item.examcnt),
-            examAttempt : Number(item.examAttempt)
+            examAttempt: Number(item.examAttempt)
         }));
 
 
@@ -103,8 +98,8 @@ export const getTotalScore = async (req: Request, res: Response): Promise<Respon
         const data = {
             correct: sumTotalCorrectAnswers,
             questions: sumTotalQuestions,
-            examCnt:serializedResult[0]?.examcnt || 0,
-            examAttempt:serializedResult[0]?.examAttempt || 0
+            examCnt: serializedResult[0]?.examcnt || 0,
+            examAttempt: serializedResult[0]?.examAttempt || 0
         }
 
         return res.status(200).json(data);

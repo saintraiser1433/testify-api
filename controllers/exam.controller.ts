@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../prisma/prisma';
 import { examValidation } from '../util/validation';
+import { ExamHeader } from '../models';
 
 
 export const getExam = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
@@ -180,109 +181,97 @@ export const checkIfExamFinished = async (req: Request, res: Response): Promise<
 }
 
 
-interface ExamHeader {
-    exam_id: number;
-    time_limit: number;
-    exam_title: string;
-    data: ExamDetailsModel[];
-}
 
-
-interface ExamDetailsModel {
-    question_id: number,
-    question: string,
-    selectedChoice: null,
-    choices: {
-        value: number,
-        label: string
-    }[];
-}
 
 export const checkExamAvailable = async (req: Request, res: Response): Promise<Response> => {
     const id = req.params.examineeId;
 
-
-    if (!id) {
-        return res.status(400).json({
-            message: 'Invalid examinee ID'
-        });
-    }
-    const attemptData = await prisma.examAttempt.findMany({
-        select: {
-            exam_id: true
-        },
-        where: {
-            examinee_id: id
+    try {
+        if (!id) {
+            throw new Error("Invalid examinee ID");
         }
-    });
-
-
-    const attemptedExamIds = attemptData.map(item => item.exam_id);
-
-    const exam = await prisma.exam.findMany({
-        select: {
-            exam_id: true,
-        },
-        where: {
-            exam_id: {
-                notIn: attemptedExamIds
+        const attemptData = await prisma.examAttempt.findMany({
+            select: {
+                exam_id: true
+            },
+            where: {
+                examinee_id: id
             }
-        },
-
-    })
-
-    const shuffledExam = exam.sort(() => Math.random() - 0.5);
-
-    if (!shuffledExam || shuffledExam.length === 0) {
-        throw new Error("You have finished the exam");
-    }
+        });
 
 
-    const data = await prisma.question.findMany({
-        select: {
-            question: true,
-            question_id: true,
-            // exam_id: true,
-            examList: {
-                select: {
-                    exam_id: true,
-                    time_limit: true,
-                    exam_title: true
+        const attemptedExamIds = attemptData.map(item => item.exam_id);
+
+        const exam = await prisma.exam.findMany({
+            select: {
+                exam_id: true,
+            },
+            where: {
+                exam_id: {
+                    notIn: attemptedExamIds
                 }
             },
-            Choices: {
-                select: {
-                    choices_id: true,
-                    description: true
-                }
-            }
-        },
-        where: {
-            exam_id: Number(shuffledExam[0].exam_id)
 
+        })
+
+        const shuffledExam = exam.sort(() => Math.random() - 0.5);
+
+        if (!shuffledExam || shuffledExam.length === 0) {
+            throw new Error("You have finished the exam");
         }
-    })
 
-    const examDetails: ExamHeader = {
-        exam_id: data[0].examList.exam_id,
-        time_limit: data[0].examList.time_limit,
-        exam_title: data[0].examList.exam_title,
-        data: [] 
-    };
-    data.forEach((item) => {
-        examDetails.data.push({
-            question_id: item.question_id,
-            question: item.question,
-            selectedChoice: null,
-            choices: item.Choices.map((choice) => ({
-                value: choice.choices_id,
-                label: choice.description
-            }))
+
+        const data = await prisma.question.findMany({
+            select: {
+                question: true,
+                question_id: true,
+                // exam_id: true,
+                examList: {
+                    select: {
+                        exam_id: true,
+                        time_limit: true,
+                        exam_title: true
+                    }
+                },
+                Choices: {
+                    select: {
+                        choices_id: true,
+                        description: true
+                    }
+                }
+            },
+            where: {
+                exam_id: Number(shuffledExam[0].exam_id)
+
+            }
+        })
+
+        const examDetails: ExamHeader = {
+            exam_id: data[0].examList.exam_id,
+            time_limit: data[0].examList.time_limit,
+            exam_title: data[0].examList.exam_title,
+            data: []
+        };
+        data.forEach((item) => {
+            examDetails.data.push({
+                question_id: item.question_id,
+                question: item.question,
+                selectedChoice: null,
+                choices: item.Choices.map((choice) => ({
+                    value: choice.choices_id,
+                    label: choice.description
+                }))
+            });
         });
-    });
 
 
-    return res.status(200).json(examDetails);
+        return res.status(200).json(examDetails);
+    } catch (err: any) {
+        return res.status(500).json({
+            message: err.message
+        })
+    }
+
 
 }
 
