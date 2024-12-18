@@ -179,6 +179,18 @@ export const checkIfExamFinished = async (req: Request, res: Response): Promise<
 
 }
 
+
+
+interface ExamDetailsModel {
+    question_id: number,
+    question: string,
+    selectedChoice: null,
+    choices: {
+        choices_id: number,
+        description: string
+    }[];
+}
+
 export const checkExamAvailable = async (req: Request, res: Response): Promise<Response> => {
     const id = req.params.examineeId;
 
@@ -215,9 +227,7 @@ export const checkExamAvailable = async (req: Request, res: Response): Promise<R
     const shuffledExam = exam.sort(() => Math.random() - 0.5);
 
     if (!shuffledExam || shuffledExam.length === 0) {
-        return res.status(400).json({
-            message: 'You have finished the exam'
-        });
+        throw new Error("You have finished the exam");
     }
 
 
@@ -225,7 +235,14 @@ export const checkExamAvailable = async (req: Request, res: Response): Promise<R
         select: {
             question: true,
             question_id: true,
-            exam_id: true,
+            // exam_id: true,
+            examList: {
+                select: {
+                    exam_id: true,
+                    time_limit: true,
+                    exam_title: true
+                }
+            },
             Choices: {
                 select: {
                     choices_id: true,
@@ -238,7 +255,54 @@ export const checkExamAvailable = async (req: Request, res: Response): Promise<R
 
         }
     })
-    return res.status(200).json(data);
+
+    const examDetails: {
+        exam_id: number;
+        time_limit: number;
+        exam_title: string;
+        data: ExamDetailsModel[];
+    } = {
+        exam_id: data[0].examList.exam_id,
+        time_limit: data[0].examList.time_limit,
+        exam_title: data[0].examList.exam_title,
+        data: [] // Initialize as an empty array
+    };
+    data.forEach((item) => {
+        // Add each question with its choices
+        examDetails.data.push({
+            question_id: item.question_id,
+            question: item.question,
+            selectedChoice: null,
+            choices: item.Choices.map((choice) => ({
+                choices_id: choice.choices_id,
+                description: choice.description
+            }))
+        });
+    });
+
+
+
+    // const finalData = data.map((item) => ({
+    //     examDetails: {
+    //         exam_id: item.examList?.exam_id || null,
+    //         time_limit: item.examList?.time_limit || null,
+    //         exam_title: item.examList?.exam_title || null,
+    //         data: {
+    //             question_id: item.question_id,
+    //             question: item.question,
+    //             choices: item.Choices.map((choice) => ({
+    //                 description: choice.description,
+    //                 choices_id: choice.choices_id
+    //             }))
+    //         }
+    //     }
+    // }));
+
+
+
+
+
+    return res.status(200).json(examDetails);
 
 }
 
