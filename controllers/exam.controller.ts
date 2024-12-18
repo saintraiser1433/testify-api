@@ -180,14 +180,21 @@ export const checkIfExamFinished = async (req: Request, res: Response): Promise<
 }
 
 
+interface ExamHeader {
+    exam_id: number;
+    time_limit: number;
+    exam_title: string;
+    data: ExamDetailsModel[];
+}
+
 
 interface ExamDetailsModel {
     question_id: number,
     question: string,
     selectedChoice: null,
     choices: {
-        choices_id: number,
-        description: string
+        value: number,
+        label: string
     }[];
 }
 
@@ -256,50 +263,23 @@ export const checkExamAvailable = async (req: Request, res: Response): Promise<R
         }
     })
 
-    const examDetails: {
-        exam_id: number;
-        time_limit: number;
-        exam_title: string;
-        data: ExamDetailsModel[];
-    } = {
+    const examDetails: ExamHeader = {
         exam_id: data[0].examList.exam_id,
         time_limit: data[0].examList.time_limit,
         exam_title: data[0].examList.exam_title,
-        data: [] // Initialize as an empty array
+        data: [] 
     };
     data.forEach((item) => {
-        // Add each question with its choices
         examDetails.data.push({
             question_id: item.question_id,
             question: item.question,
             selectedChoice: null,
             choices: item.Choices.map((choice) => ({
-                choices_id: choice.choices_id,
-                description: choice.description
+                value: choice.choices_id,
+                label: choice.description
             }))
         });
     });
-
-
-
-    // const finalData = data.map((item) => ({
-    //     examDetails: {
-    //         exam_id: item.examList?.exam_id || null,
-    //         time_limit: item.examList?.time_limit || null,
-    //         exam_title: item.examList?.exam_title || null,
-    //         data: {
-    //             question_id: item.question_id,
-    //             question: item.question,
-    //             choices: item.Choices.map((choice) => ({
-    //                 description: choice.description,
-    //                 choices_id: choice.choices_id
-    //             }))
-    //         }
-    //     }
-    // }));
-
-
-
 
 
     return res.status(200).json(examDetails);
