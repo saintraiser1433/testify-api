@@ -9,6 +9,7 @@ import auth from './auth.route'
 import fileUpload from './file.route'
 import followup from './followup.route'
 import answer from './answer.route';
+import results from './results.route';
 const router = Router();
 router.use('/auth', auth)
 router.use('/exam', exam);
@@ -20,6 +21,6 @@ router.use('/deans', deans);
 router.use('/followup', followup);
 router.use('/file', fileUpload);
 router.use('/answer', answer)
-
+router.use('/results', results)
 
 export default router;

@@ -160,6 +160,16 @@ export interface ExamDetailsModel {
     }[];
 }
 
+export interface ScoreSummary {
+    exam_id: number,
+    exam_title: string,
+    total_questions: number,
+    total_correct_answers: number,
+    success_rate: number
+}
+
+
+
 
 declare module 'express' {
     interface Request {
