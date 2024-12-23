@@ -92,9 +92,8 @@ export const getSummary = async (req: Request, res: Response): Promise<Response>
         const serializedResult = result.map((item) => ({
             exam_id: Number(item.exam_id),
             exam_title: item.exam_title,
-            percentage: null,
             total_questions: Number(item.total_questions),
-            total_correct_answers: Number(item.total_correct_answers),
+            total_correct_answer: Number(item.total_correct_answers),
             success_rate: Number(item.success_rate),
         }))
 
