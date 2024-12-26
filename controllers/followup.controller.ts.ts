@@ -13,6 +13,7 @@ export const insertFollowUp = async (req: Request, res: Response, next: NextFunc
         })
 
         return res.status(201).json({
+            status: res.statusCode,
             message: "Success created successfully",
             data: data,
         })

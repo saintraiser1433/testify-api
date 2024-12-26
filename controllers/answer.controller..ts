@@ -46,6 +46,7 @@ export const insertAnswer = async (req: Request, res: Response, next: NextFuncti
                 })),
             });
             return res.status(201).json({
+                status: res.statusCode,
                 message: "Submitted Successfully",
                 data: response,
             })
