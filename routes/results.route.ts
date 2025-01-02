@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { getTotalScore,getSummary } from "../controllers/results.controller";
+import { getTotalScoreByExaminee, getSummaryByExaminee, getAllResult } from "../controllers/results.controller";
 const route = Router();
 
 
-route.get('/:examineeId', getTotalScore);
-route.get('/summary/:examineeId', getSummary);
+route.get('/:examineeId', getTotalScoreByExaminee);
+route.get('/summary/:examineeId', getSummaryByExaminee);
+route.get('/', getAllResult);
 export default route;

@@ -135,11 +135,14 @@ export interface answerModel {
     question_id: number
 }
 
+
+
 export interface TotalScoreResult {
     total_questions: number;
     total_correct_answers: number;
-    examcnt: number,
-    examAttempt: number
+    examCnt: number,
+    attemptCnt: number,
+    fullname?: string
 }
 
 export interface ExamHeader {

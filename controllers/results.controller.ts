@@ -5,7 +5,7 @@ import { ScoreSummary, TotalScoreResult } from '../models';
 
 
 
-export const getTotalScore = async (req: Request, res: Response): Promise<Response> => {
+export const getTotalScoreByExaminee = async (req: Request, res: Response): Promise<Response> => {
     const id = req.params.examineeId;
 
     try {
@@ -32,18 +32,18 @@ export const getTotalScore = async (req: Request, res: Response): Promise<Respon
         `;
 
         const serializedResult = result.map((item: TotalScoreResult) => ({
-            total_questions: Number(item.total_questions),
-            total_correct_answers: Number(item.total_correct_answers),
-            examcnt: Number(item.examcnt),
-            examAttempt: Number(item.examAttempt)
+            questions: Number(item.total_questions),
+            correctAnswer: Number(item.total_correct_answers),
+            examcnt: Number(item.examCnt),
+            examAttempt: Number(item.attemptCnt)
         }));
 
 
-        const sumTotalQuestions = serializedResult.reduce((sum, item) => sum + item.total_questions, 0);
-        const sumTotalCorrectAnswers = serializedResult.reduce((sum, item) => sum + item.total_correct_answers, 0);
+        const sumTotalQuestions = serializedResult.reduce((sum, item) => sum + item.questions, 0);
+        const sumTotalCorrectAnswers = serializedResult.reduce((sum, item) => sum + item.correctAnswer, 0);
         const data = {
-            correct: sumTotalCorrectAnswers,
-            questions: sumTotalQuestions,
+            total_correct_answers: sumTotalCorrectAnswers,
+            total_questions: sumTotalQuestions,
             examCnt: serializedResult[0]?.examcnt || 0,
             examAttempt: serializedResult[0]?.examAttempt || 0
         }
@@ -59,7 +59,7 @@ export const getTotalScore = async (req: Request, res: Response): Promise<Respon
 
 
 
-export const getSummary = async (req: Request, res: Response): Promise<Response> => {
+export const getSummaryByExaminee = async (req: Request, res: Response): Promise<Response> => {
     const id = req.params.examineeId;
 
     try {
@@ -101,6 +101,49 @@ export const getSummary = async (req: Request, res: Response): Promise<Response>
         return res.status(200).json(serializedResult);
     } catch (err: any) {
         return res.status(500).json({
+            error: err.message
+        });
+    }
+}
+
+
+export const getAllResult = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const result = await prisma.$queryRaw<TotalScoreResult[]>`
+        SELECT
+            COALESCE(COUNT(DISTINCT quest.question_id), 0) AS total_questions,
+            COALESCE(COUNT(DISTINCT CASE WHEN choice.status = true THEN ans.question_id END), 0) AS total_correct_answers,
+            (SELECT COUNT(exam_id) FROM "Exam") AS "examCnt",
+            (SELECT COUNT(exam_id) FROM "ExamAttempt" WHERE examinee_id = examinee.id) AS "attemptCnt",
+            CONCAT(UPPER(examinee.last_name), ' ', UPPER(examinee.first_name), ' ', 
+                   UPPER(SUBSTRING(examinee.middle_name, 1, 1))) AS fullname
+           
+        FROM
+            "Exam" ext
+        LEFT JOIN "Question" quest ON ext.exam_id = quest.exam_id
+        LEFT JOIN "Choices" choice ON quest.question_id = choice.question_id
+        LEFT JOIN "Answers" ans ON choice.choices_id = ans.choices_id
+        INNER JOIN "User" examinee ON examinee.id = ans.examinee_id
+        LEFT JOIN "ExamAttempt" ea ON ea.examinee_id = examinee.id
+        GROUP BY
+            examinee.id
+        ORDER BY 
+            total_correct_answers DESC
+    `;
+
+        const serializedResult = result.map((item: TotalScoreResult) => ({
+            total_questions: Number(item.total_questions),
+            total_correct_answers: Number(item.total_correct_answers),
+            examCnt: Number(item.examCnt),
+            examAttempt: Number(item.attemptCnt),
+            examineeName: item.fullname,
+        })).filter((data) => data.examCnt === data.examAttempt);
+
+
+        return res.status(200).json(serializedResult);
+    } catch (err: any) {
+        return res.status(500).json({
+            message: 'An error occurred while fetching total score',
             error: err.message
         });
     }
