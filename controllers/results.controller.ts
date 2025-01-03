@@ -15,8 +15,8 @@ export const getTotalScoreByExaminee = async (req: Request, res: Response): Prom
                 COUNT(
                     DISTINCT CASE WHEN choice.status = true THEN ans.question_id END
                 ) AS total_correct_answers,
-                (SELECT COUNT(exam_id) from "Exam") as examcnt,
-                (SELECT COUNT(exam_id) from "ExamAttempt" where examinee_id = ${id}) as "examAttempt"
+                (SELECT COUNT(exam_id) from "Exam") as "examCnt",
+                (SELECT COUNT(exam_id) from "ExamAttempt" where examinee_id = ${id}) as "attemptCnt"
 
             FROM
                 "Exam" ext
@@ -115,8 +115,7 @@ export const getAllResult = async (req: Request, res: Response): Promise<Respons
             COALESCE(COUNT(DISTINCT CASE WHEN choice.status = true THEN ans.question_id END), 0) AS total_correct_answers,
             (SELECT COUNT(exam_id) FROM "Exam") AS "examCnt",
             (SELECT COUNT(exam_id) FROM "ExamAttempt" WHERE examinee_id = examinee.id) AS "attemptCnt",
-            CONCAT(UPPER(examinee.last_name), ' ', UPPER(examinee.first_name), ' ', 
-                   UPPER(SUBSTRING(examinee.middle_name, 1, 1))) AS fullname
+            CONCAT(examinee.last_name, ' ', examinee.first_name, ' ',SUBSTRING(examinee.middle_name, 1, 1)) AS fullname
            
         FROM
             "Exam" ext
