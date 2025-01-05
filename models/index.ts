@@ -138,6 +138,7 @@ export interface answerModel {
 
 
 export interface TotalScoreResult {
+    examineeId: string,
     total_questions: number;
     total_correct_answers: number;
     examCnt: number,

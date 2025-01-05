@@ -111,11 +111,12 @@ export const getAllResult = async (req: Request, res: Response): Promise<Respons
     try {
         const result = await prisma.$queryRaw<TotalScoreResult[]>`
         SELECT
-            COALESCE(COUNT(DISTINCT quest.question_id), 0) AS total_questions,
-            COALESCE(COUNT(DISTINCT CASE WHEN choice.status = true THEN ans.question_id END), 0) AS total_correct_answers,
+            examinee.id  "examineeId",
+            COALESCE(COUNT(DISTINCT quest.question_id), 0)  "total_questions",
+            COALESCE(COUNT(DISTINCT CASE WHEN choice.status = true THEN ans.question_id END), 0)  "total_correct_answers",
             (SELECT COUNT(exam_id) FROM "Exam") AS "examCnt",
             (SELECT COUNT(exam_id) FROM "ExamAttempt" WHERE examinee_id = examinee.id) AS "attemptCnt",
-            CONCAT(examinee.last_name, ' ', examinee.first_name, ' ',SUBSTRING(examinee.middle_name, 1, 1)) AS fullname
+            CONCAT(examinee.last_name, ' ', examinee.first_name, ' ',SUBSTRING(examinee.middle_name, 1, 1))  "fullname"
            
         FROM
             "Exam" ext
@@ -131,6 +132,7 @@ export const getAllResult = async (req: Request, res: Response): Promise<Respons
     `;
 
         const serializedResult = result.map((item: TotalScoreResult) => ({
+            examineeId: item.examineeId,
             total_questions: Number(item.total_questions),
             total_correct_answers: Number(item.total_correct_answers),
             examCnt: Number(item.examCnt),
