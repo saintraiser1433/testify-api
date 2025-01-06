@@ -140,8 +140,8 @@ model AssignDeans {
 }
 
 model FollowUp {
-  examinee       User   @relation(fields: [examineeId], references: [id])
-  examineeId     String @db.VarChar(100)
+  examinee       User   @relation(fields: [examinee_id], references: [id])
+  examinee_id     String @db.VarChar(100)
   gender         String @db.VarChar(50)
   birth_date     String @db.VarChar(50)
   contact_number String @db.VarChar(13)
@@ -149,5 +149,5 @@ model FollowUp {
   email          String @db.VarChar(100)
   address        String
 
-  @@id([examineeId])
+  @@id([examinee_id])
 }

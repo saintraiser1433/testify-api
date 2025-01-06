@@ -31,7 +31,7 @@ export const getFollowup = async (req: Request, res: Response, next: NextFunctio
     try {
         const checkFollowupData = await prisma.followUp.findFirst({
             where: {
-                examineeId: examineeId
+                examinee_id: examineeId
             }
         })
 

@@ -25,7 +25,7 @@ export const examineeValidation = {
                 "string.min": `Last Name should have a minimum length of {#limit}`,
                 "string.required": `Last Name cannot be null or empty`,
             }),
-            middle_name: Joi.string().min(3).required().messages({
+            middle_name: Joi.string().min(1).required().messages({
                 "any.required": `Middle Name cannot be null or empty`,
             }),
             username: Joi.string().min(3).required().messages({

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma/prisma';
-import { ScoreSummary, TotalScoreResult } from '../models';
+import { ExamineeScoreSummary, TotalScoreResult } from '../models';
 
 
 
@@ -63,20 +63,29 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
     const id = req.params.examineeId;
 
     try {
-        const result = await prisma.$queryRaw<ScoreSummary[]>`
+        const result = await prisma.$queryRaw<ExamineeScoreSummary[]>`
          SELECT
         ext.exam_id,
         ext.exam_title,
+        examinee.id "examinee_id",
+        examinee.first_name,
+        examinee.last_name,
+        examinee.middle_name,
+        followup.gender,
+        followup.birth_date,
+        followup.contact_number,
+        followup.school,
+        followup.address,
         COALESCE(COUNT(DISTINCT quest.question_id), 0) AS total_questions,
         COALESCE(COUNT(DISTINCT CASE choice.status WHEN true THEN examans.question_id END), 0) AS total_correct_answers,
-    CASE
-        WHEN COALESCE(COUNT(DISTINCT CASE choice.status WHEN true THEN examans.question_id END), 0) = 0 THEN 0
-        ELSE CAST(
-            COALESCE(COUNT(DISTINCT CASE choice.status WHEN true THEN examans.question_id END), 0) * 1.0 /
-            COALESCE(COUNT(DISTINCT quest.question_id), 1) * 100
-            AS NUMERIC(10, 2)
-        )
-    END AS success_rate
+        CASE
+            WHEN COALESCE(COUNT(DISTINCT CASE choice.status WHEN true THEN examans.question_id END), 0) = 0 THEN 0
+            ELSE CAST(
+                COALESCE(COUNT(DISTINCT CASE choice.status WHEN true THEN examans.question_id END), 0) * 1.0 /
+                COALESCE(COUNT(DISTINCT quest.question_id), 1) * 100
+                AS NUMERIC(10, 2)
+            )
+        END AS success_rate
     FROM
         "Exam" ext
     LEFT JOIN "Question" quest ON
@@ -85,11 +94,25 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
         quest.question_id = choice.question_id
     LEFT JOIN "Answers" examans ON
         choice.choices_id = examans.choices_id AND examans.examinee_id = ${id}
+    INNER JOIN "User" examinee ON 
+        examinee.id = examans.examinee_id
+    LEFT JOIN "FollowUp" followup ON
+        examinee.id = followup.examinee_id
     GROUP BY
         ext.exam_id,
-        ext.exam_title`;
+        ext.exam_title,
+        examinee.id,
+        examinee.first_name,
+        examinee.last_name,
+        examinee.middle_name,
+        followup.gender,
+        followup.birth_date,
+        followup.contact_number,
+        followup.school,
+        followup.address
+        `;
 
-        const serializedResult = result.map((item) => ({
+        const examResult = result.map((item) => ({
             exam_id: Number(item.exam_id),
             exam_title: item.exam_title,
             total_questions: Number(item.total_questions),
@@ -97,8 +120,22 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
             success_rate: Number(item.success_rate),
         }))
 
+        const examineeResults = result.map((item) => ({
+            examinee_id:item.examinee_id,
+            first_name:item.first_name,
+            last_name:item.last_name,
+            middle_name:item.middle_name,
+            gender:item.gender,
+            birth_date:item.birth_date,
+            contact_number:item.contact_number,
+            school:item.school,
+            address:item.address,
+            data: examResult
+            
+        })).slice(0,1);
 
-        return res.status(200).json(serializedResult);
+
+        return res.status(200).json(examineeResults);
     } catch (err: any) {
         return res.status(500).json({
             error: err.message

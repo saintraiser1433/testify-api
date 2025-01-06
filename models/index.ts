@@ -165,7 +165,16 @@ export interface ExamDetailsModel {
     }[];
 }
 
-export interface ScoreSummary {
+export interface ExamineeScoreSummary {
+    examinee_id:string,
+    first_name:string,
+    last_name:string,
+    middle_name:string,
+    gender:string,
+    birth_date:string,
+    contact_number:string,
+    school:string,
+    address:string,
     exam_id: number,
     exam_title: string,
     total_questions: number,
