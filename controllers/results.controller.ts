@@ -132,7 +132,7 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
             address:item.address,
             data: examResult
             
-        })).slice(0,1);
+        })).slice(0, 1);
 
 
         return res.status(200).json(examineeResults);
