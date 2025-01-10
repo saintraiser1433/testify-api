@@ -158,7 +158,7 @@ model SessionDetails {
   SessionHeader    SessionHeader @relation(fields: [sessionHeader_id], references: [session_id])
   sessionHeader_id String
 
-  @@id([question_id, choices_id, sessionHeader_id])
+  @@id([question_id, sessionHeader_id])
 }
 
 model SessionHeader {

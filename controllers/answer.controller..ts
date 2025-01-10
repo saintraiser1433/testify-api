@@ -61,11 +61,11 @@ export const insertAnswer = async (req: Request, res: Response, next: NextFuncti
 
 
 export const upsertSession = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
-    const { examinee_id, exam_id, timelimit, question_id, choices_id } = req.body;
+    const { examinee_id, exam_id, time_limit, question_id, choices_id } = req.body;
 
     try {
-        const result = await prisma.$transaction(async (prisma) => {
-      
+        await prisma.$transaction(async (prisma) => {
+
             const existingSession = await prisma.sessionHeader.findFirst({
                 where: {
                     examinee_id: examinee_id,
@@ -73,29 +73,28 @@ export const upsertSession = async (req: Request, res: Response, next: NextFunct
                 }
             });
 
-        
+
             const upsertSessionHeader = await prisma.sessionHeader.upsert({
                 where: {
                     session_id: existingSession?.session_id || ''
                 },
                 update: {
-                    timelimit: timelimit,
+                    timelimit: parseInt(time_limit),
                     examinee_id: examinee_id,
                     exam_id: exam_id
                 },
                 create: {
-                    timelimit: timelimit,
+                    timelimit: parseInt(time_limit),
                     examinee_id: examinee_id,
                     exam_id: exam_id
                 },
             });
 
-      
+
             const upsertSessionDetail = await prisma.sessionDetails.upsert({
                 where: {
-                    question_id_choices_id_sessionHeader_id: {
+                    question_id_sessionHeader_id: {
                         question_id: question_id,
-                        choices_id: choices_id,
                         sessionHeader_id: upsertSessionHeader.session_id
                     }
                 },
@@ -117,14 +116,13 @@ export const upsertSession = async (req: Request, res: Response, next: NextFunct
         return res.status(200).json({
             status: res.statusCode,
             message: "Upsert operation successful",
-            data: result,
         });
     } catch (err: any) {
-        
+
         return res.status(500).json({
             status: res.statusCode,
             message: "An error occurred during the upsert operation.",
             error: err.message,
         });
-    } 
+    }
 };
