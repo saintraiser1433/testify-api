@@ -141,7 +141,7 @@ model AssignDeans {
 
 model FollowUp {
   examinee       User   @relation(fields: [examinee_id], references: [id])
-  examinee_id     String @db.VarChar(100)
+  examinee_id    String @db.VarChar(100)
   gender         String @db.VarChar(50)
   birth_date     String @db.VarChar(50)
   contact_number String @db.VarChar(13)
@@ -150,4 +150,21 @@ model FollowUp {
   address        String
 
   @@id([examinee_id])
+}
+
+model SessionDetails {
+  question_id      Int           @db.Integer
+  choices_id       Int           @db.Integer
+  SessionHeader    SessionHeader @relation(fields: [sessionHeader_id], references: [session_id])
+  sessionHeader_id String
+
+  @@id([question_id, choices_id, sessionHeader_id])
+}
+
+model SessionHeader {
+  session_id     String           @id @default(cuid())
+  examinee_id    String           @db.VarChar(100)
+  exam_id        Int
+  timelimit      Int              @db.Integer
+  sessionDetails SessionDetails[]
 }

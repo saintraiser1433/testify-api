@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { insertAnswer } from "../controllers/answer.controller.";
+import { insertAnswer, upsertSession } from "../controllers/answer.controller.";
 
 const route = Router();
 
 
 route.post('/', insertAnswer);
-
+route.post('/session', upsertSession);
 export default route;

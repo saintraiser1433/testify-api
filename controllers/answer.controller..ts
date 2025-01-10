@@ -60,6 +60,71 @@ export const insertAnswer = async (req: Request, res: Response, next: NextFuncti
 }
 
 
+export const upsertSession = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
+    const { examinee_id, exam_id, timelimit, question_id, choices_id } = req.body;
 
+    try {
+        const result = await prisma.$transaction(async (prisma) => {
+      
+            const existingSession = await prisma.sessionHeader.findFirst({
+                where: {
+                    examinee_id: examinee_id,
+                    exam_id: exam_id
+                }
+            });
 
+        
+            const upsertSessionHeader = await prisma.sessionHeader.upsert({
+                where: {
+                    session_id: existingSession?.session_id || ''
+                },
+                update: {
+                    timelimit: timelimit,
+                    examinee_id: examinee_id,
+                    exam_id: exam_id
+                },
+                create: {
+                    timelimit: timelimit,
+                    examinee_id: examinee_id,
+                    exam_id: exam_id
+                },
+            });
 
+      
+            const upsertSessionDetail = await prisma.sessionDetails.upsert({
+                where: {
+                    question_id_choices_id_sessionHeader_id: {
+                        question_id: question_id,
+                        choices_id: choices_id,
+                        sessionHeader_id: upsertSessionHeader.session_id
+                    }
+                },
+                update: {
+                    sessionHeader_id: upsertSessionHeader.session_id,
+                    question_id: question_id,
+                    choices_id: choices_id
+                },
+                create: {
+                    sessionHeader_id: upsertSessionHeader.session_id,
+                    question_id: question_id,
+                    choices_id: choices_id
+                },
+            });
+
+            return { upsertSessionHeader, upsertSessionDetail };
+        });
+
+        return res.status(200).json({
+            status: res.statusCode,
+            message: "Upsert operation successful",
+            data: result,
+        });
+    } catch (err: any) {
+        
+        return res.status(500).json({
+            status: res.statusCode,
+            message: "An error occurred during the upsert operation.",
+            error: err.message,
+        });
+    } 
+};
