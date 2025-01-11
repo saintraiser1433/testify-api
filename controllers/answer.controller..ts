@@ -60,7 +60,7 @@ export const insertAnswer = async (req: Request, res: Response, next: NextFuncti
 }
 
 
-export const upsertSession = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
+export const upsertSessionAnswer = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
     const { examinee_id, exam_id, time_limit, question_id, choices_id } = req.body;
 
     try {
@@ -126,3 +126,43 @@ export const upsertSession = async (req: Request, res: Response, next: NextFunct
         });
     }
 };
+
+
+
+export const deleteSessionAnswer = async (req: Request, res: Response, next: NextFunction): Promise<Response> => {
+    const { examineeId, examId } = req.params;
+    try {
+        const sessionId = await prisma.sessionHeader.findFirst({
+            where: {
+                examinee_id: examineeId,
+                exam_id: Number(examId)
+            }
+        })
+
+        if (!sessionId) {
+            return res.status(404).json({
+                status: res.statusCode,
+                message: "Session not found",
+            });
+        }
+        console.log(sessionId)
+
+        await prisma.sessionHeader.delete({
+            where: {
+                session_id: sessionId.session_id
+            }
+        });
+
+        return res.status(200).json({
+            status: res.statusCode,
+            message: "Session deleted successfully",
+        });
+    } catch (err: any) {
+        return res.status(500).json({
+            status: res.statusCode,
+            message: "An error occurred during the delete operation.",
+            error: err.message
+        });
+    }
+
+}

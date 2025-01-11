@@ -264,7 +264,7 @@ export const checkExamAvailable = async (req: Request, res: Response): Promise<R
             });
         });
 
-        console.log(examDetails);
+
         return res.status(200).json(examDetails);
     } catch (err: any) {
         return res.status(500).json({
