@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
     getFollowup,
     insertFollowUp
-} from '../controllers/followup.controller.ts';
+} from '../controllers/followup.controller';
 import { authenticateToken } from '../middlewares/auth.middleware';
 
 

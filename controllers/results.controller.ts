@@ -1,15 +1,15 @@
-import { Request, Response } from 'express';
-import prisma from '../prisma/prisma';
-import { ExamineeScoreSummary, TotalScoreResult } from '../models';
+import { Request, Response } from "express";
+import prisma from "../prisma/prisma";
+import { ExamineeScoreSummary, TotalScoreResult } from "../models";
 
+export const getTotalScoreByExaminee = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const id = req.params.examineeId;
 
-
-
-export const getTotalScoreByExaminee = async (req: Request, res: Response): Promise<Response> => {
-    const id = req.params.examineeId;
-
-    try {
-        const result = await prisma.$queryRaw<TotalScoreResult[]>`
+  try {
+    const result = await prisma.$queryRaw<TotalScoreResult[]>`
             SELECT
                 COUNT(DISTINCT quest.question_id) AS total_questions,
                 COUNT(
@@ -31,39 +31,45 @@ export const getTotalScoreByExaminee = async (req: Request, res: Response): Prom
                 ext.exam_title
         `;
 
-        const serializedResult = result.map((item: TotalScoreResult) => ({
-            questions: Number(item.total_questions),
-            correctAnswer: Number(item.total_correct_answers),
-            examcnt: Number(item.examCnt),
-            examAttempt: Number(item.attemptCnt)
-        }));
+    const serializedResult = result.map((item: TotalScoreResult) => ({
+      questions: Number(item.total_questions),
+      correctAnswer: Number(item.total_correct_answers),
+      examcnt: Number(item.examCnt),
+      examAttempt: Number(item.attemptCnt),
+    }));
 
+    const sumTotalQuestions = serializedResult.reduce(
+      (sum, item) => sum + item.questions,
+      0
+    );
+    const sumTotalCorrectAnswers = serializedResult.reduce(
+      (sum, item) => sum + item.correctAnswer,
+      0
+    );
+    const data = {
+      total_correct_answers: sumTotalCorrectAnswers,
+      total_questions: sumTotalQuestions,
+      examCnt: serializedResult[0]?.examcnt || 0,
+      examAttempt: serializedResult[0]?.examAttempt || 0,
+    };
 
-        const sumTotalQuestions = serializedResult.reduce((sum, item) => sum + item.questions, 0);
-        const sumTotalCorrectAnswers = serializedResult.reduce((sum, item) => sum + item.correctAnswer, 0);
-        const data = {
-            total_correct_answers: sumTotalCorrectAnswers,
-            total_questions: sumTotalQuestions,
-            examCnt: serializedResult[0]?.examcnt || 0,
-            examAttempt: serializedResult[0]?.examAttempt || 0
-        }
+    return res.status(200).json(data);
+  } catch (err: any) {
+    return res.status(500).json({
+      message: "An error occurred while fetching total score",
+      error: err.message,
+    });
+  }
+};
 
-        return res.status(200).json(data);
-    } catch (err: any) {
-        return res.status(500).json({
-            message: 'An error occurred while fetching total score',
-            error: err.message
-        });
-    }
-}
+export const getSummaryByExaminee = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const id = req.params.examineeId;
 
-
-
-export const getSummaryByExaminee = async (req: Request, res: Response): Promise<Response> => {
-    const id = req.params.examineeId;
-
-    try {
-        const result = await prisma.$queryRaw<ExamineeScoreSummary[]>`
+  try {
+    const result = await prisma.$queryRaw<ExamineeScoreSummary[]>`
          SELECT
         ext.exam_id,
         ext.exam_title,
@@ -112,41 +118,43 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
         followup.address
         `;
 
-        const examResult = result.map((item) => ({
-            exam_id: Number(item.exam_id),
-            exam_title: item.exam_title,
-            total_questions: Number(item.total_questions),
-            total_correct_answer: Number(item.total_correct_answers),
-            success_rate: Number(item.success_rate),
-        }))
+    const examResult = result.map((item) => ({
+      exam_id: Number(item.exam_id),
+      exam_title: item.exam_title,
+      total_questions: Number(item.total_questions),
+      total_correct_answer: Number(item.total_correct_answers),
+      success_rate: Number(item.success_rate),
+    }));
 
-        const examineeResults = result.map((item) => ({
-            examinee_id:item.examinee_id,
-            first_name:item.first_name,
-            last_name:item.last_name,
-            middle_name:item.middle_name,
-            gender:item.gender,
-            birth_date:item.birth_date,
-            contact_number:item.contact_number,
-            school:item.school,
-            address:item.address,
-            data: examResult
-            
-        })).slice(0, 1);
+    const examineeResults = result
+      .map((item) => ({
+        examinee_id: item.examinee_id,
+        first_name: item.first_name,
+        last_name: item.last_name,
+        middle_name: item.middle_name,
+        gender: item.gender,
+        birth_date: item.birth_date,
+        contact_number: item.contact_number,
+        school: item.school,
+        address: item.address,
+        data: examResult,
+      }))
+      .slice(0, 1);
 
+    return res.status(200).json(examineeResults);
+  } catch (err: any) {
+    return res.status(500).json({
+      error: err.message,
+    });
+  }
+};
 
-        return res.status(200).json(examineeResults);
-    } catch (err: any) {
-        return res.status(500).json({
-            error: err.message
-        });
-    }
-}
-
-
-export const getAllResult = async (req: Request, res: Response): Promise<Response> => {
-    try {
-        const result = await prisma.$queryRaw<TotalScoreResult[]>`
+export const getAllResult = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const result = await prisma.$queryRaw<TotalScoreResult[]>`
         SELECT
             examinee.id  "examineeId",
             COALESCE(COUNT(DISTINCT quest.question_id), 0)  "total_questions",
@@ -168,21 +176,22 @@ export const getAllResult = async (req: Request, res: Response): Promise<Respons
             total_correct_answers DESC
     `;
 
-        const serializedResult = result.map((item: TotalScoreResult) => ({
-            examineeId: item.examineeId,
-            total_questions: Number(item.total_questions),
-            total_correct_answers: Number(item.total_correct_answers),
-            examCnt: Number(item.examCnt),
-            examAttempt: Number(item.attemptCnt),
-            examineeName: item.fullname,
-        })).filter((data) => data.examCnt === data.examAttempt);
+    const serializedResult = result
+      .map((item: TotalScoreResult) => ({
+        examineeId: item.examineeId,
+        total_questions: Number(item.total_questions),
+        total_correct_answers: Number(item.total_correct_answers),
+        examCnt: Number(item.examCnt),
+        examAttempt: Number(item.attemptCnt),
+        examineeName: item.fullname,
+      }))
+      .filter((data) => data.examCnt === data.examAttempt);
 
-
-        return res.status(200).json(serializedResult);
-    } catch (err: any) {
-        return res.status(500).json({
-            message: 'An error occurred while fetching total score',
-            error: err.message
-        });
-    }
-}
+    return res.status(200).json(serializedResult);
+  } catch (err: any) {
+    return res.status(500).json({
+      message: "An error occurred while fetching total score",
+      error: err.message,
+    });
+  }
+};
