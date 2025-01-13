@@ -164,7 +164,7 @@ export const updateSessionTime = async (
     next: NextFunction
 ): Promise<Response> => {
     const { examineeId, examId } = req.params;
-    const { timeLimit } = req.body;
+    const { time_limit } = req.body;
     try {
         const sessionId = await prisma.sessionHeader.findFirst({
             where: {
@@ -185,7 +185,7 @@ export const updateSessionTime = async (
                 session_id: sessionId.session_id,
             },
             data: {
-                timelimit: timeLimit,
+                timelimit: time_limit,
             },
         });
 
