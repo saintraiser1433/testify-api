@@ -105,54 +105,48 @@ export const upsertSessionAnswer = async (
 
     try {
         await prisma.$transaction(async (prisma) => {
-            const existingSession = await prisma.sessionHeader.findFirst({
+            let existingSession = await prisma.sessionHeader.findFirst({
                 where: {
                     examinee_id: examinee_id,
                     exam_id: exam_id,
                 },
             });
 
-            const upsertSessionHeader = await prisma.sessionHeader.upsert({
-                where: {
-                    session_id: existingSession?.session_id || "",
-                },
-                update: {
-                    timelimit: parseInt(time_limit),
-                    examinee_id: examinee_id,
-                    exam_id: exam_id,
-                },
-                create: {
-                    timelimit: parseInt(time_limit),
-                    examinee_id: examinee_id,
-                    exam_id: exam_id,
-                },
-            });
+            if (!existingSession) {
+                existingSession = await prisma.sessionHeader.create({
+                    data: {
+                        timelimit: parseInt(time_limit),
+                        examinee_id: examinee_id,
+                        exam_id: exam_id,
+                    },
+                })
+            }
 
-            const upsertSessionDetail = await prisma.sessionDetails.upsert({
+
+            await prisma.sessionDetails.upsert({
                 where: {
                     question_id_sessionHeader_id: {
                         question_id: question_id,
-                        sessionHeader_id: upsertSessionHeader.session_id,
+                        sessionHeader_id: existingSession.session_id,
                     },
                 },
                 update: {
-                    sessionHeader_id: upsertSessionHeader.session_id,
+                    sessionHeader_id: existingSession.session_id,
                     question_id: question_id,
                     choices_id: choices_id,
                 },
                 create: {
-                    sessionHeader_id: upsertSessionHeader.session_id,
+                    sessionHeader_id: existingSession.session_id,
                     question_id: question_id,
                     choices_id: choices_id,
                 },
             });
 
-            return { upsertSessionHeader, upsertSessionDetail };
         });
 
         return res.status(200).json({
             status: res.statusCode,
-            message: "Upsert operation successful",
+            message: "Successfully save answer",
         });
     } catch (err: any) {
         return res.status(500).json({
@@ -162,6 +156,52 @@ export const upsertSessionAnswer = async (
         });
     }
 };
+
+
+export const updateSessionTime = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response> => {
+    const { examineeId, examId } = req.params;
+    const { timeLimit } = req.body;
+    try {
+        const sessionId = await prisma.sessionHeader.findFirst({
+            where: {
+                examinee_id: examineeId,
+                exam_id: Number(examId),
+            },
+        });
+
+        if (!sessionId) {
+            return res.status(404).json({
+                status: res.statusCode,
+                message: "Session not found",
+            });
+        }
+
+        await prisma.sessionHeader.update({
+            where: {
+                session_id: sessionId.session_id,
+            },
+            data: {
+                timelimit: timeLimit,
+            },
+        });
+
+        return res.status(200).json({
+            status: res.statusCode,
+            message: "Successfully updated time",
+        });
+    } catch (err: any) {
+        return res.status(500).json({
+            status: res.statusCode,
+            message: "An error occurred during the update operation.",
+            error: err.message,
+        });
+    }
+}
+
 
 export const deleteSessionAnswer = async (
     req: Request,
@@ -183,7 +223,7 @@ export const deleteSessionAnswer = async (
                 message: "Session not found",
             });
         }
-        console.log(sessionId);
+
 
         await prisma.sessionHeader.delete({
             where: {

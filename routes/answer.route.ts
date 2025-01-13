@@ -4,12 +4,14 @@ import {
   upsertSessionAnswer,
   deleteSessionAnswer,
   getSessionAnswer,
+  updateSessionTime
 } from "../controllers/answer.controller.";
 
 const route = Router();
 route.get("/session/:examineeId/:examId", getSessionAnswer);
 route.post("/", insertAnswer);
 route.post("/session", upsertSessionAnswer);
+route.put("/time/:examineeId/:examId", updateSessionTime);
 route.delete("/session/:examineeId/:examId", deleteSessionAnswer);
 
 export default route;
