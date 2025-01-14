@@ -90,7 +90,6 @@ export const getSessionAnswer = async (
         return res.status(500).json({
             status: res.statusCode,
             message: "An error occurred during the upsert operation.",
-            error: err.message,
         });
     }
 };
@@ -103,6 +102,12 @@ export const upsertSessionAnswer = async (
     const { examinee_id, exam_id, time_limit, question_id, choices_id } =
         req.body;
 
+    if (!examinee_id || !exam_id || !time_limit || !question_id || !choices_id) {
+        return res.status(400).json({
+            status: 400,
+            message: "All fields are required.",
+        });
+    }
     try {
         await prisma.$transaction(async (prisma) => {
             let existingSession = await prisma.sessionHeader.findFirst({
@@ -131,8 +136,6 @@ export const upsertSessionAnswer = async (
                     },
                 },
                 update: {
-                    sessionHeader_id: existingSession.session_id,
-                    question_id: question_id,
                     choices_id: choices_id,
                 },
                 create: {
@@ -149,6 +152,7 @@ export const upsertSessionAnswer = async (
             message: "Successfully save answer",
         });
     } catch (err: any) {
+        console.error("Error during upsertSessionAnswer:", err); // Add logging
         return res.status(500).json({
             status: res.statusCode,
             message: "An error occurred during the upsert operation.",
@@ -174,9 +178,9 @@ export const updateSessionTime = async (
         });
 
         if (!sessionId) {
-            return res.status(404).json({
+            return res.status(200).json({
                 status: res.statusCode,
-                message: "Session not found",
+                message: "No session to update",
             });
         }
 
@@ -218,9 +222,9 @@ export const deleteSessionAnswer = async (
         });
 
         if (!sessionId) {
-            return res.status(404).json({
+            return res.status(200).json({
                 status: res.statusCode,
-                message: "Session not found",
+                message: "No session to remove",
             });
         }
 
@@ -233,7 +237,7 @@ export const deleteSessionAnswer = async (
 
         return res.status(200).json({
             status: res.statusCode,
-            message: "Session deleted successfully",
+            message: "Session remove successfully",
         });
     } catch (err: any) {
         return res.status(500).json({

@@ -193,9 +193,19 @@ export const checkExamAvailable = async (
   const id = req.params.examineeId;
 
   try {
-    if (!id) {
-      throw new Error("Invalid examinee ID");
+    const checkExaminee = await prisma.user.findFirst({
+      where: {
+        id: id
+      }
+    })
+
+    if (!checkExaminee) {
+      return res.status(404).json({
+        message: "Examinee not found"
+      })
     }
+
+
     const attemptData = await prisma.examAttempt.findMany({
       select: {
         exam_id: true,
@@ -221,7 +231,10 @@ export const checkExamAvailable = async (
     const shuffledExam = exam.sort(() => Math.random() - 0.5);
 
     if (!shuffledExam || shuffledExam.length === 0) {
-      throw new Error("You have finished the exam");
+      return res.status(404).json({
+        status: res.statusCode,
+        message: 'The exam is finished',
+      })
     }
 
     const data = await prisma.question.findMany({
@@ -258,7 +271,6 @@ export const checkExamAvailable = async (
       examDetails.data.push({
         question_id: item.question_id,
         question: item.question,
-        selectedChoice: null,
         choices: item.Choices.map((choice) => ({
           value: choice.choices_id,
           label: choice.description,
@@ -269,6 +281,7 @@ export const checkExamAvailable = async (
     return res.status(200).json(examDetails);
   } catch (err: any) {
     return res.status(500).json({
+      status: res.statusCode,
       message: err.message,
     });
   }

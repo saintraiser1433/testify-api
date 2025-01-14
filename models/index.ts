@@ -157,8 +157,6 @@ export interface ExamHeader {
 export interface ExamDetailsModel {
     question_id: number,
     question: string,
-    selectedChoice: null,
-
     choices: {
         value: number,
         label: string
