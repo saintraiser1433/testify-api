@@ -137,12 +137,13 @@ export interface answerModel {
 
 
 
-export interface TotalScoreResult {
+export interface AllResultModel {
     examineeId: string,
+    first_name: string,
+    last_name: string,
+    middle_name: string,
     total_questions: number;
     total_correct_answers: number;
-    examCnt: number,
-    attemptCnt: number,
     fullname?: string
 }
 
@@ -163,21 +164,23 @@ export interface ExamDetailsModel {
     }[];
 }
 
-export interface ExamineeScoreSummary {
-    examinee_id:string,
-    first_name:string,
-    last_name:string,
-    middle_name:string,
-    gender:string,
-    birth_date:string,
-    contact_number:string,
-    school:string,
-    address:string,
+export interface SummaryResult {
+    examinee_id: string,
+    first_name: string,
+    last_name: string,
+    middle_name: string,
+    birth_date: string,
+    school: string,
+    email: string,
+    address: string,
+    contact_number: string,
+    examattempt: number,
+    examcnt: number,
     exam_id: number,
     exam_title: string,
-    total_questions: number,
     total_correct_answers: number,
-    success_rate: number
+    total_questions: number,
+
 }
 
 

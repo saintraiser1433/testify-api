@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { answerModel, TotalScoreResult } from "../models";
+import { answerModel } from "../models";
 
 export const insertAnswer = async (
     req: Request,
