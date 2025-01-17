@@ -242,8 +242,63 @@ export const deleteSessionAnswer = async (
     } catch (err: any) {
         return res.status(500).json({
             status: res.statusCode,
-            message: "An error occurred during the delete operation.",
-            error: err.message,
+            message: err.message
         });
     }
 };
+
+
+export const consolidateMyAnswer = async (req: Request, res: Response): Promise<Response> => {
+    const { examineeId, examId } = req.params;
+
+    try {
+
+        const result = await prisma.question.findMany({
+            select: {
+                question: true,
+                question_id: true,
+                examList: {
+                    select: {
+                        description: true
+                    }
+                },
+                choicesList: {
+                    select: {
+                        choices_id: true,
+                        description: true,
+                        status: true,
+                        answersList: {
+                            select: {
+                                choices_id: true,
+                            }
+                        }
+                    }
+                },
+            },
+            where: {
+                exam_id: Number(examId),
+                choicesList: {
+                    some: {
+                        answersList: {
+                            every: {
+                                examinee_id: examineeId
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                question: 'asc',
+            }
+
+        })
+
+        return res.status(200).json(result);
+
+    } catch (err: any) {
+        return res.status(500).json({
+            status: res.statusCode,
+            message: err.message,
+        });
+    }
+}

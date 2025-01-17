@@ -249,7 +249,7 @@ export const checkExamAvailable = async (
             exam_title: true,
           },
         },
-        Choices: {
+        choicesList: {
           select: {
             choices_id: true,
             description: true,
@@ -271,7 +271,7 @@ export const checkExamAvailable = async (
       examDetails.data.push({
         question_id: item.question_id,
         question: item.question,
-        choices: item.Choices.map((choice) => ({
+        choices: item.choicesList.map((choice) => ({
           value: choice.choices_id,
           label: choice.description,
         })),

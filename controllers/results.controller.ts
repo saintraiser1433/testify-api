@@ -25,7 +25,6 @@ export const getSummaryByExaminee = async (
       })
     }
 
-
     // Fetch results
     const results = await prisma.$queryRaw<SummaryResult[]>`		
     SELECT 
@@ -167,8 +166,6 @@ export const getAllResult = async (
         u.last_name,
         u.middle_name`;
 
-
-
     return res.status(200).json(result);
   } catch (err: any) {
     return res.status(500).json({
@@ -177,3 +174,5 @@ export const getAllResult = async (
     });
   }
 };
+
+

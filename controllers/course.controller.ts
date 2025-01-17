@@ -36,7 +36,7 @@ export const getCourseNoAssociated = async (
       where: {
         AND: [
           {
-            AssignDeans: {
+            assignDeansList: {
               none: {},
             },
           },

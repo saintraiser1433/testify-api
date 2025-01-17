@@ -4,10 +4,12 @@ import {
   upsertSessionAnswer,
   deleteSessionAnswer,
   getSessionAnswer,
-  updateSessionTime
+  updateSessionTime,
+  consolidateMyAnswer
 } from "../controllers/answer.controller.";
 
 const route = Router();
+route.get("/consolidate/:examineeId/:examId", consolidateMyAnswer);
 route.get("/session/:examineeId/:examId", getSessionAnswer);
 route.post("/", insertAnswer);
 route.post("/session", upsertSessionAnswer);

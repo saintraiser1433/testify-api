@@ -26,7 +26,7 @@ export const getQuestion = async (
       select: {
         question_id: true,
         question: true,
-        Choices: {
+        choicesList: {
           select: {
             choices_id: true,
             description: true,
@@ -56,7 +56,7 @@ export const insertQuestion = async (
 ): Promise<Response> => {
   const body = req.body;
   return prisma.$transaction(async (tx) => {
-    const { question, exam_id, Choices } = body;
+    const { question, exam_id, choicesList } = body;
 
     const questBody = {
       question: question,
@@ -86,7 +86,7 @@ export const insertQuestion = async (
       data: value,
     });
 
-    const choiceBody = Choices.map((choice: ChoicesModel) => ({
+    const choiceBody = choicesList.map((choice: ChoicesModel) => ({
       description: choice.description,
       question_id: response.question_id,
       status: choice.status,
@@ -116,7 +116,7 @@ export const updateQuestion = async (
 ): Promise<Response> => {
   const body = req.body;
   return prisma.$transaction(async (tx) => {
-    const { question, question_id, Choices } = body;
+    const { question, question_id, choicesList } = body;
     const questBody = {
       question: question,
       question_id: question_id,
@@ -146,7 +146,7 @@ export const updateQuestion = async (
 
     //choices validate
     const { error: errorChoice, value: choicesValue } =
-      choicesValidation.update(Choices);
+      choicesValidation.update(choicesList);
 
     // Check for validation errors
     if (errorChoice) {
@@ -162,7 +162,7 @@ export const updateQuestion = async (
     });
 
     //end
-    const newChoiceId = Choices.map(
+    const newChoiceId = choicesList.map(
       (choice: ChoicesModel) => choice.choices_id
     );
 

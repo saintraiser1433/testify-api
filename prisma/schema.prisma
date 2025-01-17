@@ -28,9 +28,9 @@ model User {
   role         String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  Answers      Answers[]
-  ExamAttempt  ExamAttempt[]
-  FollowUp     FollowUp[]
+  answersList      Answers[]
+  examAttemptList  ExamAttempt[]
+  followupData     FollowUp[]
 }
 
 //suggested prisma authentication model
@@ -41,7 +41,7 @@ model Course {
   score       Int
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  AssignDeans AssignDeans[]
+  assignDeansList AssignDeans[]
 }
 
 model Exam {
@@ -52,9 +52,9 @@ model Exam {
   status      Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  Question    Question[]
-  Answers     Answers[]
-  ExamAttempt ExamAttempt[]
+  questionList    Question[]
+  answersList     Answers[]
+  examAttemptList ExamAttempt[]
 }
 
 model Question {
@@ -64,8 +64,8 @@ model Question {
   exam_id     Int
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  Choices     Choices[]
-  Answers     Answers[]
+  choicesList     Choices[]
+  answersList     Answers[]
 }
 
 model Choices {
@@ -76,7 +76,7 @@ model Choices {
   status       Boolean
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  Answers      Answers[]
+  answersList      Answers[]
 }
 
 model Answers {
@@ -110,7 +110,7 @@ model Department {
   status          Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  Deans           Deans?
+  deansList           Deans?
 }
 
 model Deans {
@@ -125,7 +125,7 @@ model Deans {
   updatedAt     DateTime      @updatedAt
   department    Department    @relation(fields: [department_id], references: [department_id])
   department_id Int           @unique
-  AssignDeans   AssignDeans[]
+  assignDeansList   AssignDeans[]
 }
 
 model AssignDeans {
@@ -155,7 +155,7 @@ model FollowUp {
 model SessionDetails {
   question_id      Int           @db.Integer
   choices_id       Int           @db.Integer
-  SessionHeader    SessionHeader @relation(fields: [sessionHeader_id], references: [session_id], onDelete: Cascade)
+  sessionHeaderList    SessionHeader @relation(fields: [sessionHeader_id], references: [session_id], onDelete: Cascade)
   sessionHeader_id String
 
   @@id([question_id, sessionHeader_id])

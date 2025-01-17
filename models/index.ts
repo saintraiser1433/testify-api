@@ -15,8 +15,8 @@ export interface ExamineeModel extends Timestamped {
     middle_name: string;
     username: string;
     password: string;
-    Answers?: AnswersModel[]; // Optional relationship
-    ExamAttempt?: ExamAttemptModel[]; // Optional relationship
+    answersList?: AnswersModel[]; // Optional relationship
+    examAttemptList?: ExamAttemptModel[]; // Optional relationship
 }
 
 // Course Model
@@ -24,7 +24,7 @@ export interface CourseModel extends Timestamped {
     course_id?: number;
     description: string;
     score: string;
-    AssignDeans?: AssignDeansModel[]; // Optional relationship
+    assignDeansList?: AssignDeansModel[]; // Optional relationship
 }
 
 // Exam Model
@@ -35,9 +35,9 @@ export interface ExamModel extends Timestamped {
     time_limit: number;
     question_limit: number;
     status: boolean;
-    Question?: QuestionModel[]; // Optional relationship
-    Answers?: AnswersModel[]; // Optional relationship
-    ExamAttempt?: ExamAttemptModel[]; // Optional relationship
+    questionList?: QuestionModel[]; // Optional relationship
+    answersList?: AnswersModel[]; // Optional relationship
+    examAttemptList?: ExamAttemptModel[]; // Optional relationship
 }
 
 // Question Model
@@ -45,9 +45,9 @@ export interface QuestionModel extends Timestamped {
     question_id?: number;
     question: string;
     exam_id?: number;
-    Exam?: ExamModel[]; // Optional relationship
-    Choices?: ChoicesModel[]; // Optional relationship
-    Answers?: AnswersModel[]; // Optional relationship
+    examList?: ExamModel[]; // Optional relationship
+    choicesList?: ChoicesModel[]; // Optional relationship
+    answersList?: AnswersModel[]; // Optional relationship
 }
 
 // Choices Model
@@ -98,7 +98,7 @@ export interface DeansModel extends Timestamped {
     password: string;
     department_id: number; // Unique
     department?: DepartmentModel; // Optional relationship
-    AssignDeans?: AssignDeansModel[]; // Optional relationship
+    assignDeansList?: AssignDeansModel[]; // Optional relationship
 }
 
 // AssignDeans Model
