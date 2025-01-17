@@ -270,6 +270,9 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
                         answersList: {
                             select: {
                                 choices_id: true,
+                            },
+                            where: {
+                                examinee_id: examineeId
                             }
                         }
                     }

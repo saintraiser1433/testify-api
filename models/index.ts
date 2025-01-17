@@ -164,6 +164,7 @@ export interface ExamDetailsModel {
     }[];
 }
 
+//to be delete
 export interface SummaryResult {
     examinee_id: string,
     first_name: string,
@@ -182,6 +183,40 @@ export interface SummaryResult {
     total_questions: number,
 
 }
+
+
+//for results summary
+export interface Answer {
+    choices_id: number;
+}
+
+export interface Choice {
+    choices_id: number;
+    description: string;
+    status: boolean;
+    answersList: Answer[];
+}
+
+export interface Exam {
+    exam_id: number;
+    description: string;
+}
+
+export interface Question {
+    question: string;
+    question_id: number;
+    examList: Exam;
+    choicesList: Choice[];
+}
+
+export interface GroupedExam {
+    exam_id: number;
+    exam_title: string;
+    totalQuestions: number;
+    correctAnswers: number;
+}
+
+export type GroupedExamMap = Record<number, GroupedExam>;
 
 
 

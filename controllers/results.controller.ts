@@ -1,6 +1,127 @@
 import { Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { AllResultModel, SummaryResult } from "../models";
+import { AllResultModel, SummaryResult, GroupedExamMap, Question } from "../models";
+
+
+export const getSummaryByExamineeV2 = async (req: Request, res: Response): Promise<Response> => {
+  const id = req.params.examineeId;
+
+  try {
+    const result = await prisma.question.findMany({
+      select: {
+        question: true,
+        question_id: true,
+        examList: {
+          select: {
+            exam_id: true,
+            description: true,
+          }
+        },
+        choicesList: {
+          select: {
+            choices_id: true,
+            description: true,
+            status: true,
+            answersList: {
+              select: {
+                choices_id: true,
+              },
+              where: {
+
+                examinee_id: id
+              }
+            }
+          }
+        },
+
+      },
+
+
+
+      where: {
+        choicesList: {
+          some: {
+            answersList: {
+              every: {
+                examinee_id: id
+              }
+            }
+          }
+        }
+      },
+
+      orderBy: {
+        exam_id: 'asc',
+      }
+    })
+
+    const header = await prisma.user.findFirst({
+      where: {
+        id: id
+      },
+      include: {
+        followupData: true
+      }
+    })
+
+
+    const detail = result.reduce((group: GroupedExamMap, item: Question) => {
+      const examId = item.examList.exam_id;
+
+      if (!group[examId]) {
+        group[examId] = {
+          exam_id: examId,
+          exam_title: item.examList.description,
+          totalQuestions: 0,
+          correctAnswers: 0,
+        };
+      }
+
+      // Increment the total question count
+      group[examId].totalQuestions++;
+
+      // Check for correct answers
+      item.choicesList.forEach((choice) => {
+        const isCorrect = choice.answersList.some(
+          (answer) => answer.choices_id === choice.choices_id
+        );
+
+        if (isCorrect && choice.status) {
+          group[examId].correctAnswers++;
+        }
+      });
+
+      return group;
+    }, {} as GroupedExamMap);
+
+
+    const summaryArray = Object.values(detail);
+
+
+    const combineData = {
+      examinee_id: header?.id || '',
+      first_name: header?.first_name || '',
+      last_name: header?.last_name || '',
+      middle_name: header?.middle_name || '',
+      birth_date: header?.followupData[0].birth_date || '',
+      gender: header?.followupData[0].gender || '',
+      school: header?.followupData[0].school || '',
+      email: header?.followupData[0].email || '',
+      address: header?.followupData[0].address || '',
+      contact_number: header?.followupData[0].contact_number || '',
+      examDetails: summaryArray
+    };
+
+    return res.status(200).json(combineData);
+
+
+
+  } catch (err: any) {
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+}
 
 
 
