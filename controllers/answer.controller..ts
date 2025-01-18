@@ -259,7 +259,7 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
                 question_id: true,
                 examList: {
                     select: {
-                        description: true
+                        exam_title: true
                     }
                 },
                 choicesList: {

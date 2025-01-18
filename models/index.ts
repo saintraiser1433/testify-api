@@ -179,8 +179,8 @@ export interface SummaryResult {
     examcnt: number,
     exam_id: number,
     exam_title: string,
-    total_correct_answers: number,
-    total_questions: number,
+    correctAnswers: number,
+    totalQuestions: number,
 
 }
 
@@ -199,7 +199,7 @@ export interface Choice {
 
 export interface Exam {
     exam_id: number;
-    description: string;
+    exam_title: string;
 }
 
 export interface Question {
