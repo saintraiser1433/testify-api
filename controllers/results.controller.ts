@@ -14,7 +14,9 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
           select: {
             exam_id: true,
             exam_title: true,
-          }
+
+          },
+          
         },
         choicesList: {
           select: {
@@ -51,18 +53,54 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
     })
 
     const header = await prisma.user.findFirst({
+      select:{
+          id:true,
+          first_name:true,
+          middle_name:true,
+          last_name:true,
+          followupData:{
+            select:{
+              gender:true,
+              birth_date:true,
+              contact_number:true,
+              school:true,
+              email:true,
+              address:true
+            }
+          }
+      },
       where: {
         id: id
       },
-      include: {
-        followupData: true
+     
+    })
+
+
+
+    const countAttempt = await prisma.examAttempt.aggregate({
+      _count:true,
+      where:{
+        examinee_id:id
+      }
+    })
+
+    const numberOfExams = await prisma.exam.aggregate({
+      _count:true,
+      where:{
+        questionList:{
+          some:{
+            choicesList:{
+              some:{}
+            }
+          }
+          
+        }
       }
     })
 
 
     const detail = result.reduce((group: GroupedExamMap, item: Question) => {
       const examId = item.examList.exam_id;
-
       if (!group[examId]) {
         group[examId] = {
           exam_id: examId,
@@ -96,12 +134,14 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
       first_name: header?.first_name || '',
       last_name: header?.last_name || '',
       middle_name: header?.middle_name || '',
-      birth_date: header?.followupData[0].birth_date || '',
-      gender: header?.followupData[0].gender || '',
-      school: header?.followupData[0].school || '',
-      email: header?.followupData[0].email || '',
-      address: header?.followupData[0].address || '',
-      contact_number: header?.followupData[0].contact_number || '',
+      birth_date: header?.followupData[0]?.birth_date || '',
+      gender: header?.followupData[0]?.gender || '',
+      school: header?.followupData[0]?.school || '',
+      email: header?.followupData[0]?.email || '',
+      address: header?.followupData[0]?.address || '',
+      contact_number: header?.followupData[0]?.contact_number || '',
+      examineeAttempt:countAttempt._count,
+      totalExams:numberOfExams._count,
       examDetails: summaryArray
     };
 

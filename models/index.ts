@@ -188,6 +188,7 @@ export interface SummaryResult {
 //for results summary
 export interface Answer {
     choices_id: number;
+    examinee_id?: string
 }
 
 export interface Choice {
@@ -207,11 +208,12 @@ export interface Question {
     question_id: number;
     examList: Exam;
     choicesList: Choice[];
+
 }
 
 export interface GroupedExam {
-    exam_id: number;
-    exam_title: string;
+    exam_id?: number;
+    exam_title?: string;
     totalQuestions: number;
     correctAnswers: number;
 }

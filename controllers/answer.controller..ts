@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { answerModel } from "../models";
+import { answerModel, GroupedExamMap, Question } from "../models";
+
 
 export const insertAnswer = async (
     req: Request,
@@ -259,6 +260,7 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
                 question_id: true,
                 examList: {
                     select: {
+                        exam_id: true,
                         exam_title: true
                     }
                 },
@@ -270,8 +272,10 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
                         answersList: {
                             select: {
                                 choices_id: true,
+                                examinee_id: true
                             },
                             where: {
+
                                 examinee_id: examineeId
                             }
                         }
@@ -294,9 +298,43 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
                 question: 'asc',
             }
 
-        })
+        });
 
-        return res.status(200).json(result);
+        const initialMap = result.reduce((group: GroupedExamMap, item: Question) => {
+            item.choicesList.forEach((choice: any) => {
+                choice.answersList.forEach((answer: any) => {
+                    const id = answer.examinee_id;
+                    if (!group[id]) {
+                        group[id] = {
+                            totalQuestions: 0,
+                            correctAnswers: 0,
+                        };
+                    }
+                    group[id].totalQuestions++;
+
+
+                    const isCorrect = choice.choices_id === answer.choices_id;
+
+                    if (isCorrect === choice.status) {
+                        group[id].correctAnswers++;
+                    }
+
+                })
+            })
+
+
+
+            return group;
+        }, {});
+
+        const valueMap = Object.values(initialMap);
+
+        const enrichedResult = {
+            summaryScore: valueMap,
+            data: result
+        }
+
+        return res.status(200).json(enrichedResult);
 
     } catch (err: any) {
         return res.status(500).json({
