@@ -256,49 +256,48 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
 
         const result = await prisma.question.findMany({
             select: {
-                question: true,
-                question_id: true,
-                examList: {
+              question: true,
+              question_id: true,
+              examList: {
+                select: {
+                  exam_id: true,
+                  exam_title: true
+                }
+              },
+              choicesList: {
+                select: {
+                  choices_id: true,
+                  description: true,
+                  status: true,
+                  answersList: {
                     select: {
-                        exam_id: true,
-                        exam_title: true
+                      choices_id: true,
+                      examinee_id: true
+                    },
+                    where: {
+                      examinee_id: examineeId
                     }
-                },
-                choicesList: {
-                    select: {
-                        choices_id: true,
-                        description: true,
-                        status: true,
-                        answersList: {
-                            select: {
-                                choices_id: true,
-                                examinee_id: true
-                            },
-                            where: {
-
-                                examinee_id: examineeId
-                            }
-                        }
-                    }
-                },
+                  }
+                }
+              },
             },
             where: {
-                exam_id: Number(examId),
-                choicesList: {
-                    some: {
-                        answersList: {
-                            every: {
-                                examinee_id: examineeId
-                            }
-                        }
+              exam_id: Number(examId),
+              choicesList: {
+                some: {
+                  answersList: {
+                    none: { // Use "none" to find unanswered questions
+                      examinee_id: examineeId
                     }
+                  },
+                  
                 }
+              }
             },
             orderBy: {
-                question: 'asc',
+              question: 'asc',
             }
-
-        });
+          });
 
         const initialMap = result.reduce((group: GroupedExamMap, item: Question) => {
             item.choicesList.forEach((choice: any) => {

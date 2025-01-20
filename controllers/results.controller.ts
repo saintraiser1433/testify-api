@@ -39,7 +39,7 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
         choicesList: {
           some: {
             answersList: {
-              every: {
+              none: {
                 examinee_id: id
               }
             }
@@ -192,6 +192,7 @@ export const getAllResult = async (req: Request, res: Response): Promise<Respons
             }
           }
         },
+        
 
       },
 

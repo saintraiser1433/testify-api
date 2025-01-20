@@ -117,17 +117,6 @@ export const updatedDeans = async (
       });
     }
 
-    const checkAssociateDept = await tx.deans.findFirst({
-      where: {
-        department_id: Number(value.department_id),
-      },
-    });
-
-    if (checkAssociateDept) {
-      return res.status(409).json({
-        message: "Already taken department",
-      });
-    }
 
     const response = await tx.deans.update({
       where: {
