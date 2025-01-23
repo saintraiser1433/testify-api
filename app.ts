@@ -3,14 +3,31 @@ import { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
 import router from './routes/index.route';
-const app: Express = express();
+import { expressLogger, errorLogger, appLogger } from './util/logger';
+const app = express();
 const PORT = process.env.APP_PORT || 3000;
 
 
 app.use(express.json({ limit: '10mb' }));
 app.use(cors());
-app.use('/api/v1', router)
+app.use(expressLogger);
+app.use(errorLogger);
 app.use('/uploads', express.static('public/uploads')); //for static directory
+
+
+app.use('/api/v1', router)
+
+app.get('/500', (req, res) => {
+  res.sendStatus(500);
+})
+
+app.get('/400', (req, res) => {
+  res.sendStatus(400);
+})
+
+app.get('/error', (req, res) => {
+  appLogger.error('Fuckk');
+})
 
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({

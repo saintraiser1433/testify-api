@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
 import { answerModel, GroupedExamMap, Question } from "../models";
+import { appLogger } from "../util/logger";
 
 
 export const insertAnswer = async (
@@ -55,6 +56,7 @@ export const insertAnswer = async (
             });
         });
     } catch (err: any) {
+        appLogger.error('Error during insertion', { err, body: req.body })
         return res.status(500).json({
             message: err.message,
         });
@@ -88,6 +90,7 @@ export const getSessionAnswer = async (
 
         return res.status(200).json(sessionDetails)
     } catch (err: any) {
+        appLogger.error('Error during fetching data', { err, params: req.params })
         return res.status(500).json({
             status: res.statusCode,
             message: "An error occurred during the upsert operation.",
@@ -153,7 +156,7 @@ export const upsertSessionAnswer = async (
             message: "Successfully save answer",
         });
     } catch (err: any) {
-        console.error("Error during upsertSessionAnswer:", err); // Add logging
+        appLogger.error("Error during during insertion of answer:", { err, body: req.body });
         return res.status(500).json({
             status: res.statusCode,
             message: "An error occurred during the upsert operation.",
@@ -199,6 +202,7 @@ export const updateSessionTime = async (
             message: "Successfully updated time",
         });
     } catch (err: any) {
+        appLogger.error("Error during during update of answer:", { err, body: req.body, params: req.params });
         return res.status(500).json({
             status: res.statusCode,
             message: "An error occurred during the update operation.",
@@ -241,6 +245,7 @@ export const deleteSessionAnswer = async (
             message: "Session remove successfully",
         });
     } catch (err: any) {
+        appLogger.error("Error during during deletion of session answer:", { err, body: req.body, params: req.params });
         return res.status(500).json({
             status: res.statusCode,
             message: err.message
@@ -253,51 +258,50 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
     const { examineeId, examId } = req.params;
 
     try {
-
         const result = await prisma.question.findMany({
             select: {
-              question: true,
-              question_id: true,
-              examList: {
-                select: {
-                  exam_id: true,
-                  exam_title: true
-                }
-              },
-              choicesList: {
-                select: {
-                  choices_id: true,
-                  description: true,
-                  status: true,
-                  answersList: {
+                question: true,
+                question_id: true,
+                examList: {
                     select: {
-                      choices_id: true,
-                      examinee_id: true
-                    },
-                    where: {
-                      examinee_id: examineeId
+                        exam_id: true,
+                        exam_title: true
                     }
-                  }
-                }
-              },
+                },
+                choicesList: {
+                    select: {
+                        choices_id: true,
+                        description: true,
+                        status: true,
+                        answersList: {
+                            select: {
+                                choices_id: true,
+                                examinee_id: true
+                            },
+                            where: {
+                                examinee_id: examineeId
+                            }
+                        }
+                    }
+                },
             },
             where: {
-              exam_id: Number(examId),
-              choicesList: {
-                some: {
-                  answersList: {
-                    none: { // Use "none" to find unanswered questions
-                      examinee_id: examineeId
+                exam_id: Number(examId),
+                choicesList: {
+                    some: {
+                        answersList: {
+                            none: { // Use "none" to find unanswered questions
+                                examinee_id: examineeId
+                            }
+                        },
+
                     }
-                  },
-                  
                 }
-              }
             },
             orderBy: {
-              question: 'asc',
+                question: 'asc',
             }
-          });
+        });
 
         const initialMap = result.reduce((group: GroupedExamMap, item: Question) => {
             item.choicesList.forEach((choice: any) => {
@@ -336,6 +340,7 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
         return res.status(200).json(enrichedResult);
 
     } catch (err: any) {
+        appLogger.error("Error during during consolidation answer:", { err, body: req.body, params: req.params });
         return res.status(500).json({
             status: res.statusCode,
             message: err.message,

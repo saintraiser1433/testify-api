@@ -7,6 +7,7 @@ import {
 } from "../services/authService.services";
 import bcrypt from "bcrypt";
 import { DecodedPayload } from "../models";
+import { appLogger } from "../util/logger";
 
 export const signIn = async (
   req: Request,
@@ -63,6 +64,7 @@ export const signIn = async (
     }
     return res.status(401).json({ error: "Incorrect Credentialss" });
   } catch (err: any) {
+    appLogger.error("Error during during sigIn:", { err, body: req.body, params: req.params });
     return res.status(401).json({
       message: err.message,
     });
@@ -113,6 +115,7 @@ export const signup = async (
 
     return res.status(201).json(user);
   } catch (err: any) {
+    appLogger.error("Error during creation:", { err, body: req.body, params: req.params });
     return res.status(500).json({ message: err.message });
   }
 };
@@ -185,6 +188,7 @@ export const refreshToken = async (
     });
     return res.status(200).json({ accessToken, status: "authenticated" });
   } catch (err) {
+    appLogger.error("Error during refresh token:", { err, body: req.body, params: req.params });
     return res
       .status(403)
       .json({
