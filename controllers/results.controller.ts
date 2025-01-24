@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../prisma/prisma";
 import { GroupedExamMap, Question } from "../models";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 
 const listOfQuestions = async (id: string) => {
@@ -110,15 +111,18 @@ const countOfExam = async (id: string) => {
 
 export const getSummaryByExaminee = async (req: Request, res: Response): Promise<Response> => {
   const id = req.params.examineeId;
-  try {
 
-    const [questions, userInfo, cntAttempt, cntExam] = await Promise.all([
+  if (!id) {
+    return res.status(400).json({ message: "Examinee ID is required" });
+  }
+
+  try {
+    const [questions, userInfo, attemptCount, examCount] = await Promise.all([
       listOfQuestions(id),
       userInformation(id),
       countAttempt(id),
       countOfExam(id),
-
-    ])
+    ]);
 
     const detail = questions.reduce((group: GroupedExamMap, item: Question) => {
       const examId = item.examList.exam_id;
@@ -146,9 +150,7 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
       return group;
     }, {} as GroupedExamMap);
 
-
     const summaryArray = Object.values(detail);
-
 
     const combineData = {
       examinee_id: userInfo?.id || '',
@@ -161,72 +163,63 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
       email: userInfo?.followupData[0]?.email || '',
       address: userInfo?.followupData[0]?.address || '',
       contact_number: userInfo?.followupData[0]?.contact_number || '',
-      examineeAttempt: cntAttempt._count,
-      totalExams: cntExam._count,
-      examDetails: summaryArray
+      examineeAttempt: attemptCount._count,
+      totalExams: examCount._count,
+      examDetails: summaryArray,
     };
-    return res.status(200).json(combineData);
 
-  } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return res.status(200).json(combineData);
+  } catch (err) {
+    return handlePrismaError(err, res);
   }
-}
+};
 
 
 export const getAllResult = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const result = await prisma.question.findMany({
-      select: {
-        question: true,
-        question_id: true,
-        examList: {
-          select: {
-            exam_id: true,
-            exam_title: true,
-
+    const [result, countQuestions] = await Promise.all([
+      prisma.question.findMany({
+        select: {
+          question: true,
+          question_id: true,
+          examList: {
+            select: {
+              exam_id: true,
+              exam_title: true,
+            },
+          },
+          choicesList: {
+            select: {
+              choices_id: true,
+              description: true,
+              status: true,
+              answersList: {
+                select: {
+                  examinee_id: true,
+                  choices_id: true,
+                  examineeList: {
+                    select: {
+                      first_name: true,
+                      last_name: true,
+                      middle_name: true,
+                      followupData: true,
+                    },
+                  },
+                },
+              },
+            },
           },
         },
-        choicesList: {
-          select: {
-            choices_id: true,
-            description: true,
-            status: true,
-            answersList: {
-              select: {
-                examinee_id: true,
-                choices_id: true,
-                examineeList: {
-                  select: {
-                    first_name: true,
-                    last_name: true,
-                    middle_name: true,
-                    followupData: true
-                  }
-
-                }
-              },
-            }
-          }
+        orderBy: {
+          exam_id: 'asc',
         },
-
-
-      },
-
-      orderBy: {
-        exam_id: 'asc',
-      }
-    })
-
-
-
-    const countQuestions = await prisma.question.aggregate({
-      _count: true
-    })
+      }),
+      prisma.question.aggregate({
+        _count: true,
+      }),
+    ]);
 
     const map = result.reduce((group: any, item: any) => {
-
       item.choicesList.forEach((choice: any) => {
         choice.answersList.forEach((answer: any) => {
           const examinee_id = answer.examinee_id;
@@ -237,16 +230,17 @@ export const getAllResult = async (req: Request, res: Response): Promise<Respons
               first_name: answer.examineeList.first_name,
               last_name: answer.examineeList.last_name,
               middle_name: answer.examineeList.middle_name,
-              birth_date: answer.examineeList.followupData[0].birth_date,
-              school: answer.examineeList.followupData[0].school,
-              email: answer.examineeList.followupData[0].email,
-              address: answer.examineeList.followupData[0].address,
-              contact_number: answer.examineeList.followupData[0].contact_number,
-              gender: answer.examineeList.followupData[0].gender,
+              birth_date: answer.examineeList.followupData[0]?.birth_date || '',
+              school: answer.examineeList.followupData[0]?.school || '',
+              email: answer.examineeList.followupData[0]?.email || '',
+              address: answer.examineeList.followupData[0]?.address || '',
+              contact_number: answer.examineeList.followupData[0]?.contact_number || '',
+              gender: answer.examineeList.followupData[0]?.gender || '',
               totalCorrect: 0,
               totalQuestions: countQuestions._count,
             };
           }
+
           const isCorrect = choice.choices_id === answer.choices_id && choice.status;
 
           if (isCorrect) {
@@ -258,17 +252,12 @@ export const getAllResult = async (req: Request, res: Response): Promise<Respons
       return group;
     }, {});
 
-
     const final = Object.values(map);
 
-
     return res.status(200).json(final);
-
-  } catch (err: any) {
-    return res.status(500).json({
-      message: err.message
-    })
+  } catch (err) {
+    return handlePrismaError(err, res);
   }
-}
+};
 
 

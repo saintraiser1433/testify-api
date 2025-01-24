@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const uploadFile = async (
   req: Request,
@@ -13,8 +14,6 @@ export const uploadFile = async (
       .status(200)
       .json({ message: "File uploaded successfully", url: req.file.filename });
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };

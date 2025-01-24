@@ -7,13 +7,14 @@ import {
   updateSessionTime,
   consolidateMyAnswer
 } from "../controllers/answer.controller.";
+import { authenticateToken } from "../middlewares/auth.middleware";
 
 const route = Router();
-route.get("/consolidate/:examineeId/:examId", consolidateMyAnswer);
-route.get("/session/:examineeId/:examId", getSessionAnswer);
-route.post("/", insertAnswer);
-route.post("/session", upsertSessionAnswer);
-route.put("/time/:examineeId/:examId", updateSessionTime);
-route.delete("/session/:examineeId/:examId", deleteSessionAnswer);
+route.get("/consolidate/:examineeId/:examId", authenticateToken, consolidateMyAnswer);
+route.get("/session/:examineeId/:examId", authenticateToken, getSessionAnswer);
+route.post("/", authenticateToken, insertAnswer);
+route.post("/session", authenticateToken, upsertSessionAnswer);
+route.put("/time/:examineeId/:examId", authenticateToken, updateSessionTime);
+route.delete("/session/:examineeId/:examId", authenticateToken, deleteSessionAnswer);
 
 export default route;

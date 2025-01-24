@@ -210,15 +210,15 @@ export const choicesValidation = {
 export const deansValidation = {
     insert: (data: DeansModel) => {
         const schema = Joi.object({
-            first_name: Joi.string().empty().required().messages({
+            first_name: Joi.string().empty().min(3).required().messages({
                 "string.empty": `First Name cannot be empty`,
                 "any.required": `First Name cannot be null or empty`,
             }),
-            last_name: Joi.string().empty().required().messages({
+            last_name: Joi.string().empty().min(3).required().messages({
                 "string.empty": `Last Name cannot be empty`,
                 "any.required": `Last Name cannot be null or empty`,
             }),
-            middle_name: Joi.string().empty().required().messages({
+            middle_name: Joi.string().empty().min(3).required().messages({
                 "string.empty": `Middle Name cannot be empty`,
                 "any.required": `Middle Name cannot be null or empty`,
             }),
