@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { appLogger } from "../util/logger";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const getTotalSummary = async (
   req: Request,
@@ -101,10 +101,8 @@ export const getTotalSummary = async (
 
     return res.status(200).json(finalMap);
   } catch (err: any) {
-    appLogger.error('Error during fetching data', { err })
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
+
   }
 };
 

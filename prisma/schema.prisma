@@ -16,42 +16,42 @@ datasource db {
 //local provider
 
 model User {
-  id           String        @id @default(cuid())
-  first_name   String        @db.VarChar(100)
-  last_name    String        @db.VarChar(100)
-  middle_name  String        @db.VarChar(100)
-  email        String?       @db.VarChar(100)
-  username     String        @db.VarChar(100)
-  password     String        @db.VarChar(100)
-  accessToken  String?
-  refreshToken String?
-  role         String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  answersList      Answers[]
-  examAttemptList  ExamAttempt[]
-  followupData     FollowUp[]
+  id              String        @id @default(cuid())
+  first_name      String        @db.VarChar(100)
+  last_name       String        @db.VarChar(100)
+  middle_name     String        @db.VarChar(100)
+  email           String?       @unique @db.VarChar(100)
+  username        String        @unique @db.VarChar(100)
+  password        String        @db.VarChar(100)
+  accessToken     String?
+  refreshToken    String?
+  role            String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  answersList     Answers[]
+  examAttemptList ExamAttempt[]
+  followupData    FollowUp[]
 }
 
 //suggested prisma authentication model
 
 model Course {
-  course_id   Int           @id @default(autoincrement())
-  description String        @db.VarChar(100)
-  score       Int
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  course_id       Int           @id @default(autoincrement())
+  description     String        @unique @db.VarChar(100)
+  score           Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   assignDeansList AssignDeans[]
 }
 
 model Exam {
-  exam_id     Int           @id @default(autoincrement())
-  exam_title  String        @db.VarChar(150)
-  description String        @db.VarChar(255)
-  time_limit  Int
-  status      Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  exam_id         Int           @id @default(autoincrement())
+  exam_title      String        @unique @db.VarChar(150)
+  description     String        @db.VarChar(255)
+  time_limit      Int
+  status          Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   questionList    Question[]
   answersList     Answers[]
   examAttemptList ExamAttempt[]
@@ -59,13 +59,13 @@ model Exam {
 
 model Question {
   question_id Int       @id @default(autoincrement())
-  question    String
+  question    String    @unique
   examList    Exam      @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade, onUpdate: Cascade)
   exam_id     Int
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  choicesList     Choices[]
-  answersList     Answers[]
+  choicesList Choices[]
+  answersList Answers[]
 }
 
 model Choices {
@@ -76,7 +76,7 @@ model Choices {
   status       Boolean
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  answersList      Answers[]
+  answersList  Answers[]
 }
 
 model Answers {
@@ -106,26 +106,26 @@ model ExamAttempt {
 
 model Department {
   department_id   Int      @id @default(autoincrement())
-  department_name String
+  department_name String   @unique
   status          Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  deansList           Deans?
+  deansList       Deans?
 }
 
 model Deans {
-  deans_id      Int           @id @default(autoincrement())
-  first_name    String        @db.VarChar(100)
-  last_name     String        @db.VarChar(100)
-  middle_name   String        @db.VarChar(100)
-  username      String        @db.VarChar(100)
-  password      String        @db.VarChar(100)
-  status        Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  department    Department    @relation(fields: [department_id], references: [department_id])
-  department_id Int           @unique
-  assignDeansList   AssignDeans[]
+  deans_id        Int           @id @default(autoincrement())
+  first_name      String        @unique @db.VarChar(100)
+  last_name       String        @unique @db.VarChar(100)
+  middle_name     String        @unique @db.VarChar(100)
+  username        String        @unique @db.VarChar(100)
+  password        String        @db.VarChar(100)
+  status          Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  department      Department    @relation(fields: [department_id], references: [department_id])
+  department_id   Int           @unique
+  assignDeansList AssignDeans[]
 }
 
 model AssignDeans {
@@ -144,7 +144,7 @@ model FollowUp {
   examinee_id    String @db.VarChar(100)
   gender         String @db.VarChar(50)
   birth_date     String @db.VarChar(50)
-  contact_number String @db.VarChar(13)
+  contact_number String @unique @db.VarChar(13)
   school         String
   email          String @db.VarChar(100)
   address        String
@@ -153,10 +153,10 @@ model FollowUp {
 }
 
 model SessionDetails {
-  question_id      Int           @db.Integer
-  choices_id       Int           @db.Integer
-  sessionHeaderList    SessionHeader @relation(fields: [sessionHeader_id], references: [session_id], onDelete: Cascade)
-  sessionHeader_id String
+  question_id       Int           @db.Integer
+  choices_id        Int           @db.Integer
+  sessionHeaderList SessionHeader @relation(fields: [sessionHeader_id], references: [session_id], onDelete: Cascade)
+  sessionHeader_id  String
 
   @@id([question_id, sessionHeader_id])
 }
@@ -167,6 +167,4 @@ model SessionHeader {
   exam_id        Int
   timelimit      Int              @db.Integer
   sessionDetails SessionDetails[]
-
- 
 }

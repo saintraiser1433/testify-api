@@ -14,7 +14,7 @@ const route = Router();
 
 route.get('/', authenticateToken, getExaminee);
 route.post('/', authenticateToken, insertExaminee);
-route.put('/:id', authenticateToken, updateExaminee);
+route.put('/:id', updateExaminee);
 route.delete('/:id', authenticateToken, deleteExaminee)
 
 export default route;

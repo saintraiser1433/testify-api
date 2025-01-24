@@ -223,11 +223,16 @@ export type GroupedExamMap = Record<number, GroupedExam>;
 
 
 
+interface UserPayload {
+    id: string;
+    username: string;
+    role: string;
+}
 
 
 declare module 'express' {
     interface Request {
-        user?: any; // Replace `any` with your specific user type if available
+        user?: UserPayload; 
     }
 }
 

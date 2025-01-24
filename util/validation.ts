@@ -1,5 +1,6 @@
-const Joi = require('joi');
-
+// const Joi = require('joi');
+import Joi from 'joi';
+import { Response } from 'express';
 import {
     ChoicesModel,
     CourseModel,
@@ -38,7 +39,8 @@ export const examineeValidation = {
             email: Joi.string().optional(),
             role: Joi.string().optional()
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
+
     },
 
     update: (data: ExamineeModel) => {
@@ -46,11 +48,11 @@ export const examineeValidation = {
             id: Joi.string().optional(),
             first_name: Joi.string().min(3).empty().optional(),
             last_name: Joi.string().min(3).empty().optional(),
-            middle_name: Joi.string().min(3).empty().optional(),
+            middle_name: Joi.string().min(0).empty().optional(),
             username: Joi.string().min(3).empty().optional(),
             password: Joi.string().min(3).empty().optional(),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
 };
 
@@ -61,13 +63,11 @@ export const courseValidation = {
                 "string.empty": `Course cannot be empty`,
                 "any.required": `Course cannot be null or empty`,
             }),
-            score: Joi.number().min(1).required().messages({
-                "string.base": `Score should be a type of 'number'`,
-                "string.empty": `Score cannot be empty`,
+            score: Joi.number().required().messages({
                 "any.required": `Score cannot be null or empty`,
             }),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
     update: (data: CourseModel) => {
         const schema = Joi.object({
@@ -80,7 +80,7 @@ export const courseValidation = {
                 "string.empty": `Score cannot be empty`,
             }),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
 };
 
@@ -94,7 +94,7 @@ export const departmentValidation = {
             }),
             status: Joi.boolean().optional(),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
 };
 
@@ -118,7 +118,7 @@ export const examValidation = {
                 "any.required": `Question Limit cannot be null or empty`,
             }),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
     update: (data: ExamModel) => {
         const schema = Joi.object({
@@ -138,7 +138,7 @@ export const examValidation = {
             exam_id: Joi.number().min(1).empty().optional(),
             status: Joi.boolean().optional(),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
 };
 
@@ -154,7 +154,7 @@ export const questionValidation = {
                 "number.required": `Exam cannot be null or empty`,
             }),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
     update: (data: QuestionModel) => {
         const schema = Joi.object({
@@ -164,7 +164,7 @@ export const questionValidation = {
             }),
             question_id: Joi.number().required(),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
 };
 
@@ -186,7 +186,7 @@ export const choicesValidation = {
             .messages({
                 "array.min": "At least one choice is required",
             });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
     update: (data: ChoicesModel) => {
         const schema = Joi.array()
@@ -203,7 +203,7 @@ export const choicesValidation = {
             .messages({
                 "array.min": "At least one choice is required",
             });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
 };
 
@@ -236,7 +236,7 @@ export const deansValidation = {
             }),
             status: Joi.boolean().optional(),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
     update: (data: DeansModel) => {
         const schema = Joi.object({
@@ -264,6 +264,14 @@ export const deansValidation = {
             }),
             status: Joi.boolean().optional(),
         });
-        return schema.validate(data);
+        return schema.validate(data, { abortEarly: false });
     },
+};
+
+
+export const handleValidationError = (error: Joi.ValidationError, res: Response) => {
+    return res.status(400).json({
+        message: "Validation failed",
+        details: error.details.map((detail) => detail.message),
+    });
 };

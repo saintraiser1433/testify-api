@@ -7,7 +7,7 @@ import {
 } from "../services/authService.services";
 import bcrypt from "bcrypt";
 import { DecodedPayload } from "../models";
-import { appLogger } from "../util/logger";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const signIn = async (
   req: Request,
@@ -64,10 +64,7 @@ export const signIn = async (
     }
     return res.status(401).json({ error: "Incorrect Credentialss" });
   } catch (err: any) {
-    appLogger.error("Error during during sigIn:", { err, body: req.body, params: req.params });
-    return res.status(401).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };
 
@@ -115,8 +112,7 @@ export const signup = async (
 
     return res.status(201).json(user);
   } catch (err: any) {
-    appLogger.error("Error during creation:", { err, body: req.body, params: req.params });
-    return res.status(500).json({ message: err.message });
+    return handlePrismaError(err, res);
   }
 };
 
@@ -125,16 +121,23 @@ export const signOut = async (
   res: Response
 ): Promise<Response> => {
   const { id } = req.body;
-  await prisma.user.update({
-    where: {
-      id: id,
-    },
-    data: {
-      accessToken: null,
-      refreshToken: null,
-    },
-  });
-  return res.sendStatus(200);
+  try {
+    await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        accessToken: null,
+        refreshToken: null,
+      },
+    });
+    return res.status(200).json({
+      message: 'Successfully Signout'
+    })
+  } catch (err: any) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
 export const refreshToken = async (
@@ -188,12 +191,7 @@ export const refreshToken = async (
     });
     return res.status(200).json({ accessToken, status: "authenticated" });
   } catch (err) {
-    appLogger.error("Error during refresh token:", { err, body: req.body, params: req.params });
-    return res
-      .status(403)
-      .json({
-        message: "Session expired or invalid token",
-        status: "unauthenticated",
-      });
+    return handlePrismaError(err, res);
+
   }
 };

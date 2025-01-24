@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const insertFollowUp = async (
   req: Request,
@@ -19,9 +20,7 @@ export const insertFollowUp = async (
       data: data,
     });
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };
 
@@ -41,8 +40,6 @@ export const getFollowup = async (
 
     return res.status(200).send(checkFollowupData);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };

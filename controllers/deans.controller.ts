@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { deansValidation } from "../util/validation";
+import { deansValidation, handleValidationError } from "../util/validation";
+import { handlePrismaError } from "../util/prismaErrorHandler";
+
 
 export const getDeans = async (
   req: Request,
@@ -35,11 +37,11 @@ export const getDeans = async (
     });
     return res.status(200).json(data);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
+
   }
 };
+
 
 export const insertDeans = async (
   req: Request,
@@ -47,47 +49,49 @@ export const insertDeans = async (
   next: NextFunction
 ): Promise<Response> => {
   const body = req.body;
-  return prisma.$transaction(async (tx) => {
-    const { error, value } = deansValidation.insert(body);
+  try {
+    return prisma.$transaction(async (tx) => {
+      const { error, value } = deansValidation.insert(body);
 
-    if (error) {
-      return res.status(400).json({
-        message: error.details[0].message,
+      if (error) {
+        return handleValidationError(error, res);
+      }
+
+      // const deans = await tx.deans.findFirst({
+      //   where: {
+      //     AND: [{ first_name: value.first_name }, { last_name: value.last_name }],
+      //   },
+      // });
+
+      // if (deans) {
+      //   return res.status(409).json({
+      //     message: "This deans already existing",
+      //   });
+      // }
+
+      // const checkAssociateDept = await tx.deans.findFirst({
+      //   where: {
+      //     department_id: Number(value.department_id),
+      //   },
+      // });
+
+      // if (checkAssociateDept) {
+      //   return res.status(409).json({
+      //     message: "Already taken department",
+      //   });
+      // }
+
+      const response = await tx.deans.create({
+        data: value,
       });
-    }
-
-    const deans = await tx.deans.findFirst({
-      where: {
-        AND: [{ first_name: value.first_name }, { last_name: value.last_name }],
-      },
-    });
-
-    if (deans) {
-      return res.status(409).json({
-        message: "This deans already existing",
+      return res.status(201).json({
+        message: "Dean created successfully",
+        data: response,
       });
-    }
-
-    const checkAssociateDept = await tx.deans.findFirst({
-      where: {
-        department_id: Number(value.department_id),
-      },
     });
-
-    if (checkAssociateDept) {
-      return res.status(409).json({
-        message: "Already taken department",
-      });
-    }
-
-    const response = await tx.deans.create({
-      data: value,
-    });
-    return res.status(201).json({
-      message: "Dean created successfully",
-      data: response,
-    });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
 };
 
 export const updatedDeans = async (
@@ -96,56 +100,47 @@ export const updatedDeans = async (
 ): Promise<Response> => {
   const id = req.params.id;
   const body = req.body;
-  return prisma.$transaction(async (tx) => {
-    const { error, value } = deansValidation.update(body);
+  try {
+    return prisma.$transaction(async (tx) => {
+      const { error, value } = deansValidation.update(body);
 
-    if (error) {
-      return res.status(400).json({
-        message: error.details[0].message,
+      if (error) {
+        return handleValidationError(error, res);
+      }
+
+      // const deans = await tx.deans.findFirst({
+      //   where: {
+      //     deans_id: Number(id),
+      //   },
+      // });
+
+      // if (!deans) {
+      //   return res.status(400).json({
+      //     message: "Deans not found",
+      //   });
+      // }
+
+
+      const response = await tx.deans.update({
+        where: {
+          deans_id: Number(id),
+        },
+        data: value,
       });
-    }
-
-    const deans = await tx.deans.findFirst({
-      where: {
-        deans_id: Number(id),
-      },
-    });
-
-    if (!deans) {
-      return res.status(400).json({
-        message: "Deans not found",
+      return res.status(200).json({
+        message: "Deans updated successfully",
+        data: response,
       });
-    }
-
-
-    const response = await tx.deans.update({
-      where: {
-        deans_id: Number(id),
-      },
-      data: value,
     });
-    return res.status(200).json({
-      message: "Deans updated successfully",
-      data: response,
-    });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
-export const deleteDeans = (req: Request, res: Response): Promise<Response> => {
+export const deleteDeans = async (req: Request, res: Response): Promise<Response> => {
   const id = req.params.id;
-  return prisma.$transaction(async (tx) => {
-    const course = await tx.course.findFirst({
-      where: {
-        course_id: Number(id),
-      },
-    });
-
-    if (!course) {
-      return res.status(404).json({
-        message: "Course not found",
-      });
-    }
-
+  try {
     await prisma.course.delete({
       where: {
         course_id: Number(id),
@@ -154,7 +149,10 @@ export const deleteDeans = (req: Request, res: Response): Promise<Response> => {
     return res.status(201).json({
       message: "Course deleted successfully",
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
 //assigned Deans
@@ -172,10 +170,8 @@ export const assignDeans = async (
       message: "Successfully assigned course",
       data: response,
     });
-  } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+  } catch (err) {
+    return handlePrismaError(err, res);
   }
 };
 
@@ -204,9 +200,7 @@ export const getAssignDeans = async (
 
     return res.status(200).json(data);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };
 
@@ -232,8 +226,7 @@ export const deleteAssignDeans = async (
       data: response,
     });
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };
+

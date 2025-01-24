@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { examineeValidation } from "../util/validation";
+import { examineeValidation, handleValidationError } from "../util/validation";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const getExaminee = async (
   req: Request,
@@ -22,9 +23,7 @@ export const getExaminee = async (
     });
     return res.status(200).json(data);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };
 
@@ -34,14 +33,14 @@ export const insertExaminee = async (
   next: NextFunction
 ): Promise<Response> => {
   const body = req.body;
-  return prisma.$transaction(async (tx) => {
+  try {
     const { error, value } = examineeValidation.insert(body);
+
     if (error) {
-      return res.status(400).json({
-        message: error.details[0].message,
-      });
+      return handleValidationError(error, res);
     }
-    const user = await tx.user.findFirst({
+
+    const user = await prisma.user.findFirst({
       where: {
         AND: [
           { first_name: value.first_name },
@@ -58,14 +57,17 @@ export const insertExaminee = async (
       });
     }
 
-    const response = await tx.user.create({
+    const response = await prisma.user.create({
       data: value,
     });
     return res.status(201).json({
       message: "Student created successfully",
       data: response,
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
 export const updateExaminee = async (
@@ -74,28 +76,15 @@ export const updateExaminee = async (
 ): Promise<Response> => {
   const body = req.body;
   const id = req.params.id;
-  return prisma.$transaction(async (tx) => {
+  try {
     const { error, value } = examineeValidation.update(body);
 
     if (error) {
-      return res.status(400).json({
-        message: error.details[0].message,
-      });
+      return handleValidationError(error, res);
     }
 
-    const examinee = await tx.user.findFirst({
-      where: {
-        id: id,
-      },
-    });
 
-    if (!examinee) {
-      return res.status(409).json({
-        message: "Student already exist",
-      });
-    }
-
-    const response = await tx.user.update({
+    const response = await prisma.user.update({
       where: {
         id: id,
       },
@@ -106,27 +95,18 @@ export const updateExaminee = async (
       message: "Student updated successfully",
       data: response,
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
-export const deleteExaminee = (
+export const deleteExaminee = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   const id = req.params.id;
-  return prisma.$transaction(async (tx) => {
-    const examinee = await tx.user.findFirst({
-      where: {
-        id: id,
-      },
-    });
-
-    if (!examinee) {
-      return res.status(404).json({
-        message: "Student updated successfully",
-      });
-    }
-
+  try {
     await prisma.user.delete({
       where: {
         id: id,
@@ -135,5 +115,7 @@ export const deleteExaminee = (
     return res.status(200).json({
       message: "Student deleted successfully",
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
 };

@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { choicesValidation, questionValidation } from "../util/validation";
+import { choicesValidation, handleValidationError, questionValidation } from "../util/validation";
 import { ChoicesModel } from "../models";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const getQuestion = async (
   req: Request,
@@ -10,17 +11,17 @@ export const getQuestion = async (
 ): Promise<Response> => {
   const id = req.params.id;
   try {
-    const checkIfExist = await prisma.exam.findFirst({
-      where: {
-        exam_id: Number(id),
-      },
-    });
+    // const checkIfExist = await prisma.exam.findFirst({
+    //   where: {
+    //     exam_id: Number(id),
+    //   },
+    // });
 
-    if (!checkIfExist) {
-      return res.status(404).json({
-        error: "Exam not found",
-      });
-    }
+    // if (!checkIfExist) {
+    //   return res.status(404).json({
+    //     error: "Exam not found",
+    //   });
+    // }
 
     const data = await prisma.question.findMany({
       select: {
@@ -43,9 +44,7 @@ export const getQuestion = async (
     });
     return res.status(200).json(data);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };
 
@@ -55,59 +54,57 @@ export const insertQuestion = async (
   next: NextFunction
 ): Promise<Response> => {
   const body = req.body;
-  return prisma.$transaction(async (tx) => {
-    const { question, exam_id, choicesList } = body;
+  try {
+    return prisma.$transaction(async (tx) => {
+      const { question, exam_id, choicesList } = body;
 
-    const questBody = {
-      question: question,
-      exam_id: exam_id,
-    };
+      const questBody = { question: question, exam_id: exam_id };
 
-    const { error: err, value } = questionValidation.insert(questBody);
-    if (err) {
-      return res.status(400).json({
-        message: err.details[0].message,
+      const { error, value } = questionValidation.insert(questBody);
+      if (error) {
+        return handleValidationError(error, res);
+      }
+
+      const checkExamIsExist = await tx.exam.findFirst({
+        where: {
+          exam_id: Number(value.exam_id),
+        },
       });
-    }
 
-    const checkExamIsExist = await tx.exam.findFirst({
-      where: {
-        exam_id: Number(value.exam_id),
-      },
-    });
+      if (!checkExamIsExist) {
+        return res.status(404).json({
+          message: `Exam with ID ${value.exam_id} not found`,
+        });
+      }
 
-    if (!checkExamIsExist) {
-      return res.status(404).json({
-        message: "Exam not found",
+      const response = await tx.question.create({
+        data: value,
       });
-    }
 
-    const response = await tx.question.create({
-      data: value,
-    });
+      const choiceBody = choicesList.map((choice: ChoicesModel) => ({
+        description: choice.description,
+        question_id: response.question_id,
+        status: choice.status,
+      }));
 
-    const choiceBody = choicesList.map((choice: ChoicesModel) => ({
-      description: choice.description,
-      question_id: response.question_id,
-      status: choice.status,
-    }));
+      const { error: errorChoice, value: choicesValue } =
+        choicesValidation.insert(choiceBody);
 
-    const { error: errorChoice, value: choicesValue } =
-      choicesValidation.insert(choiceBody);
+      if (errorChoice) {
+        return handleValidationError(errorChoice, res);
+      }
 
-    if (errorChoice) {
-      return res.status(400).json({
-        error: errorChoice.details[0].message,
+      await tx.choices.createMany({
+        data: choicesValue,
       });
-    }
+      return res.status(201).json({
+        message: "Created successfully",
+      });
+    });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
 
-    await tx.choices.createMany({
-      data: choicesValue,
-    });
-    return res.status(201).json({
-      message: "Created successfully",
-    });
-  });
 };
 
 export const updateQuestion = async (

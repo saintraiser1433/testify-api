@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
 import { answerModel, GroupedExamMap, Question } from "../models";
 import { appLogger } from "../util/logger";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 
 export const insertAnswer = async (
@@ -55,11 +56,8 @@ export const insertAnswer = async (
                 data: response,
             });
         });
-    } catch (err: any) {
-        appLogger.error('Error during insertion', { err, body: req.body })
-        return res.status(500).json({
-            message: err.message,
-        });
+    } catch (err: unknown) {
+        return handlePrismaError(err, res);
     }
 };
 
@@ -90,11 +88,7 @@ export const getSessionAnswer = async (
 
         return res.status(200).json(sessionDetails)
     } catch (err: any) {
-        appLogger.error('Error during fetching data', { err, params: req.params })
-        return res.status(500).json({
-            status: res.statusCode,
-            message: "An error occurred during the upsert operation.",
-        });
+        return handlePrismaError(err, res);
     }
 };
 
@@ -155,13 +149,8 @@ export const upsertSessionAnswer = async (
             status: res.statusCode,
             message: "Successfully save answer",
         });
-    } catch (err: any) {
-        appLogger.error("Error during during insertion of answer:", { err, body: req.body });
-        return res.status(500).json({
-            status: res.statusCode,
-            message: "An error occurred during the upsert operation.",
-            error: err.message,
-        });
+    } catch (err: unknown) {
+        return handlePrismaError(err, res);
     }
 };
 
@@ -202,12 +191,7 @@ export const updateSessionTime = async (
             message: "Successfully updated time",
         });
     } catch (err: any) {
-        appLogger.error("Error during during update of answer:", { err, body: req.body, params: req.params });
-        return res.status(500).json({
-            status: res.statusCode,
-            message: "An error occurred during the update operation.",
-            error: err.message,
-        });
+        return handlePrismaError(err, res);
     }
 }
 
@@ -245,11 +229,7 @@ export const deleteSessionAnswer = async (
             message: "Session remove successfully",
         });
     } catch (err: any) {
-        appLogger.error("Error during during deletion of session answer:", { err, body: req.body, params: req.params });
-        return res.status(500).json({
-            status: res.statusCode,
-            message: err.message
-        });
+        return handlePrismaError(err, res);
     }
 };
 
@@ -339,11 +319,7 @@ export const consolidateMyAnswer = async (req: Request, res: Response): Promise<
 
         return res.status(200).json(enrichedResult);
 
-    } catch (err: any) {
-        appLogger.error("Error during during consolidation answer:", { err, body: req.body, params: req.params });
-        return res.status(500).json({
-            status: res.statusCode,
-            message: err.message,
-        });
+    } catch (err: unknown) {
+        return handlePrismaError(err, res);
     }
 }

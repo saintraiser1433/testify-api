@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { examValidation } from "../util/validation";
+import { examValidation, handleValidationError } from "../util/validation";
 import { ExamHeader } from "../models";
+import { appLogger } from "../util/logger";
+import { Prisma } from "@prisma/client";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const getExam = async (
   req: Request,
@@ -23,9 +26,9 @@ export const getExam = async (
     });
     return res.status(200).json(data);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
+
+
   }
 };
 
@@ -43,9 +46,7 @@ export const getExamId = async (
     });
     return res.status(200).json(response);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };
 
@@ -55,16 +56,13 @@ export const insertExam = async (
   next: NextFunction
 ): Promise<Response> => {
   const body = req.body;
-  return prisma.$transaction(async (tx) => {
+  try {
     const { error, value } = examValidation.update(body);
 
     if (error) {
-      return res.status(400).json({
-        message: error.details[0].message,
-      });
+      return handleValidationError(error, res);
     }
-
-    const exam = await tx.exam.findFirst({
+    const exam = await prisma.exam.findFirst({
       where: {
         exam_title: {
           equals: value.exam_title,
@@ -78,14 +76,17 @@ export const insertExam = async (
       });
     }
 
-    const response = await tx.exam.create({
+    const response = await prisma.exam.create({
       data: value,
     });
     return res.status(200).json({
       message: "Exam created successfully",
       data: response,
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+
+  }
 };
 
 export const updateExam = async (
@@ -94,28 +95,14 @@ export const updateExam = async (
 ): Promise<Response> => {
   const body = req.body;
   const id = req.params.id;
-  return prisma.$transaction(async (tx) => {
+  try {
     const { error, value } = examValidation.update(body);
 
     if (error) {
-      return res.status(400).json({
-        message: error.details[0].message,
-      });
+      return handleValidationError(error, res);
     }
 
-    const department = await tx.exam.findFirst({
-      where: {
-        exam_id: Number(id),
-      },
-    });
-
-    if (!department) {
-      return res.status(404).json({
-        message: "Exam not found",
-      });
-    }
-
-    const response = await tx.exam.update({
+    const response = await prisma.exam.update({
       where: {
         exam_id: Number(id),
       },
@@ -125,24 +112,15 @@ export const updateExam = async (
       message: "Exam updated successfully",
       data: response,
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
-export const deleteExam = (req: Request, res: Response): Promise<Response> => {
+export const deleteExam = async (req: Request, res: Response): Promise<Response> => {
   const id = req.params.id;
-  return prisma.$transaction(async (tx) => {
-    const exam = await tx.exam.findFirst({
-      where: {
-        exam_id: Number(id),
-      },
-    });
-
-    if (!exam) {
-      return res.status(404).json({
-        message: "Exam not found",
-      });
-    }
-
+  try {
     await prisma.exam.delete({
       where: {
         exam_id: Number(id),
@@ -151,7 +129,10 @@ export const deleteExam = (req: Request, res: Response): Promise<Response> => {
     return res.status(200).json({
       message: "Exam deleted successfully",
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
 export const checkIfExamFinished = async (
@@ -159,31 +140,35 @@ export const checkIfExamFinished = async (
   res: Response
 ): Promise<Response> => {
   const id = req.params.id;
-
-  const data = await prisma.examAttempt.findMany({
-    select: {
-      exam_id: true,
-    },
-    where: {
-      examinee_id: id,
-    },
-  });
-  const examId = data.map((item) => item.exam_id);
-
-  const exam = await prisma.exam.findMany({
-    select: {
-      exam_id: true,
-    },
-    where: {
-      exam_id: {
-        notIn: examId,
+  try {
+    const data = await prisma.examAttempt.findMany({
+      select: {
+        exam_id: true,
       },
-    },
-  });
+      where: {
+        examinee_id: id,
+      },
+    });
+    const examId = data.map((item) => item.exam_id);
 
-  const shuffledExam = exam.sort(() => Math.random() - 0.5);
+    const exam = await prisma.exam.findMany({
+      select: {
+        exam_id: true,
+      },
+      where: {
+        exam_id: {
+          notIn: examId,
+        },
+      },
+    });
 
-  return res.status(200).json(shuffledExam);
+    const shuffledExam = exam.sort(() => Math.random() - 0.5);
+
+    return res.status(200).json(shuffledExam);
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
 export const checkExamAvailable = async (
@@ -261,28 +246,25 @@ export const checkExamAvailable = async (
       },
     });
 
-    const examDetails: ExamHeader = {
-      exam_id: data[0].examList.exam_id,
-      time_limit: data[0].examList.time_limit,
-      exam_title: data[0].examList.exam_title,
-      data: [],
-    };
-    data.forEach((item) => {
-      examDetails.data.push({
-        question_id: item.question_id,
-        question: item.question,
-        choices: item.choicesList.map((choice) => ({
-          value: choice.choices_id,
-          label: choice.description,
+    const formatExamDetails = (data: any): ExamHeader => {
+      return {
+        exam_id: data[0].examList.exam_id,
+        time_limit: data[0].examList.time_limit,
+        exam_title: data[0].examList.exam_title,
+        data: data.map((item: any) => ({
+          question_id: item.question_id,
+          question: item.question,
+          choices: item.choicesList.map((choice: any) => ({
+            value: choice.choices_id,
+            label: choice.description,
+          })),
         })),
-      });
-    });
+      };
+    };
+    const examDetails = formatExamDetails(data);
 
     return res.status(200).json(examDetails);
   } catch (err: any) {
-    return res.status(500).json({
-      status: res.statusCode,
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
   }
 };

@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
-import { departmentValidation } from "../util/validation";
+import { departmentValidation, handleValidationError } from "../util/validation";
+import { appLogger } from "../util/logger";
+import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const getDepartment = async (
   req: Request,
@@ -20,9 +22,8 @@ export const getDepartment = async (
     });
     return res.status(200).json(data);
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
+
   }
 };
 
@@ -33,40 +34,22 @@ export const insertDepartment = async (
 ): Promise<Response> => {
   const body = req.body;
   try {
-    const data = prisma.$transaction(async (tx) => {
-      const { error, value } = departmentValidation.validate(body);
+    const { error, value } = departmentValidation.validate(body);
 
-      if (error) {
-        return res.status(400).json({
-          message: error.details[0].message,
-        });
-      }
+    if (error) {
+      return handleValidationError(error, res);
+    }
 
-      const department = await tx.department.findFirst({
-        where: {
-          department_name: value.department_name,
-        },
-      });
-
-      if (department) {
-        return res.status(409).json({
-          message: "Department already exist",
-        });
-      }
-
-      const response = await tx.department.create({
-        data: value,
-      });
-      return res.status(201).json({
-        message: "Department created successfully",
-        data: response,
-      });
+    const response = await prisma.department.create({
+      data: value,
     });
-    return data;
+    return res.status(201).json({
+      message: "Department created successfully",
+      data: response,
+    });
   } catch (err: any) {
-    return res.status(500).json({
-      message: err.message,
-    });
+    return handlePrismaError(err, res);
+
   }
 };
 
@@ -76,28 +59,14 @@ export const updateDepartment = async (
 ): Promise<Response> => {
   const body = req.body;
   const id = req.params.id;
-  return prisma.$transaction(async (tx) => {
+  try {
     const { error, value } = departmentValidation.validate(body);
 
     if (error) {
-      return res.status(400).json({
-        message: error.details[0].message,
-      });
+      return handleValidationError(error, res);
     }
 
-    const department = await tx.department.findFirst({
-      where: {
-        department_id: Number(id),
-      },
-    });
-
-    if (!department) {
-      return res.status(404).json({
-        message: "Department not found",
-      });
-    }
-
-    const response = await tx.department.update({
+    const response = await prisma.department.update({
       where: {
         department_id: Number(id),
       },
@@ -107,27 +76,18 @@ export const updateDepartment = async (
       message: "Department updated successfully",
       data: response,
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+  }
+
 };
 
-export const deleteDepartment = (
+export const deleteDepartment = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   const id = req.params.id;
-  return prisma.$transaction(async (tx) => {
-    const department = await tx.department.findFirst({
-      where: {
-        department_id: Number(id),
-      },
-    });
-
-    if (!department) {
-      return res.status(404).json({
-        message: "Department not found",
-      });
-    }
-
+  try {
     await prisma.department.delete({
       where: {
         department_id: Number(id),
@@ -136,5 +96,9 @@ export const deleteDepartment = (
     return res.status(200).json({
       message: "Department deleted successfully",
     });
-  });
+  } catch (err) {
+    return handlePrismaError(err, res);
+
+  }
+
 };
