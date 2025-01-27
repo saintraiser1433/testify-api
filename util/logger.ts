@@ -10,13 +10,6 @@ export const appLogger = createLogger({
         format.metadata()
     ),
     transports: [
-        // Console transport for development
-        // new transports.Console({
-        //     format: format.combine(
-        //         format.colorize(),
-        //         format.simple()
-        //     )
-        // }),
         // File transport for error logs
         new transports.File({
             filename: path.join(process.cwd(), 'logs', 'error.log'),
@@ -32,14 +25,14 @@ export const appLogger = createLogger({
     exitOnError: false
 });
 
-if (process.env.NODE_ENV === 'development') {
-    appLogger.add(new transports.Console({
-        format: format.combine(
-            format.colorize(),
-            format.simple()
-        )
-    }));
-}
+// if (process.env.NODE_ENV === 'development') {
+//     appLogger.add(new transports.Console({
+//         format: format.combine(
+//             format.colorize(),
+//             format.simple()
+//         )
+//     }));
+// }
 
 // Express middleware logger
 export const expressLogger = expressWinston.logger({

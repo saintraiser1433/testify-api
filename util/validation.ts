@@ -176,10 +176,6 @@ export const choicesValidation = {
                     "string.empty": `Choice cannot be empty`,
                     "any.required": `Choice cannot be null or empty`,
                 }),
-                question_id: Joi.number().required().messages({
-                    "number.empty": `Question cannot be empty`,
-                    "any.required": `Question cannot be null or empty`,
-                }),
                 status: Joi.boolean().optional(),
             })
             .min(1)

@@ -244,6 +244,7 @@ export const checkExamAvailable = async (
       where: {
         exam_id: Number(shuffledExam[0].exam_id),
       },
+
     });
 
     const formatExamDetails = (data: any): ExamHeader => {
@@ -257,8 +258,8 @@ export const checkExamAvailable = async (
           choices: item.choicesList.map((choice: any) => ({
             value: choice.choices_id,
             label: choice.description,
-          })),
-        })),
+          })).sort(() => Math.random() - 0.5),
+        })).sort(() => Math.random() - 0.5),
       };
     };
     const examDetails = formatExamDetails(data);

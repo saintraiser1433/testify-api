@@ -56,7 +56,7 @@ export const insertQuestion = async (
   const { question, exam_id, choicesList } = req.body;
 
   // Validate question
-  const { error: questionError, value: validatedQuestion } = questionValidation.insert({
+  const { error: questionError } = questionValidation.insert({
     question,
     exam_id,
   });
@@ -65,47 +65,46 @@ export const insertQuestion = async (
     return handleValidationError(questionError, res);
   }
 
+  // Validate choices
+  const choicesData = choicesList.map((choice: ChoicesModel) => ({
+    description: choice.description,
+    status: choice.status,
+  }));
+  const { error: choicesError } = choicesValidation.insert(choicesData);
+
+  if (choicesError) {
+    return handleValidationError(choicesError, res);
+  }
+
   try {
     return await prisma.$transaction(async (tx) => {
-      // Check if the exam exists
-      const existingExam = await tx.exam.findFirst({
-        where: {
-          exam_id: Number(validatedQuestion.exam_id),
+      const results = await tx.question.create({
+        data: {
+          question: question,
+          exam_id: exam_id,
+          choicesList: {
+            create: choicesData,
+          },
         },
-      });
+        include: {
+          choicesList: true
+        }
+      })
 
-      if (!existingExam) {
-        return res.status(404).json({
-          message: `Exam with ID ${validatedQuestion.exam_id} not found`,
-        });
+      const resultMap = {
+        question_id: results.question_id,
+        question: results.question,
+        choicesList: results.choicesList.map((item) => ({
+          choices_id: item.choices_id,
+          description: item.description,
+          status: item.status
+        }))
       }
 
-      // Create the question
-      const createdQuestion = await tx.question.create({
-        data: validatedQuestion,
-      });
-
-      // Prepare choices data
-      const choicesData = choicesList.map((choice: ChoicesModel) => ({
-        description: choice.description,
-        question_id: createdQuestion.question_id,
-        status: choice.status,
-      }));
-
-      // Validate choices
-      const { error: choicesError, value: validatedChoices } = choicesValidation.insert(choicesData);
-
-      if (choicesError) {
-        return handleValidationError(choicesError, res);
-      }
-
-      // Create choices
-      await tx.choices.createMany({
-        data: validatedChoices,
-      });
 
       return res.status(201).json({
         message: "Created successfully",
+        data: resultMap
       });
     });
   } catch (err) {
@@ -117,92 +116,109 @@ export const updateQuestion = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { question, question_id, choicesList } = req.body;
+  // const { question, question_id, choicesList } = req.body;
 
-  // Validate question
-  const { error: questionError, value: validatedQuestion } = questionValidation.update({
-    question,
-    question_id,
-  });
+  // // Validate question
+  // const { error: questionError } = questionValidation.update({
+  //   question,
+  //   question_id,
+  // });
 
-  if (questionError) {
-    return res.status(400).json({
-      message: questionError.details[0].message,
-    });
-  }
+  // if (questionError) {
+  //   return handleValidationError(questionError, res);
+  // }
 
-  // Validate choices
-  const { error: choicesError, value: validatedChoices } = choicesValidation.update(choicesList);
+  // // Validate choices
+  // const { error: choicesError } = choicesValidation.update(choicesList);
 
-  if (choicesError) {
-    return res.status(400).json({
-      message: choicesError.details[0].message,
-    });
-  }
+  // if (choicesError) {
+  //   return handleValidationError(choicesError, res);
+  // }
 
   try {
     return await prisma.$transaction(async (tx) => {
-      // Check if the question exists
-      const existingQuestion = await tx.question.findFirst({
+      const { question, question_id, choicesList } = req.body;
+      const questBody = {
+        question: question,
+        question_id: question_id,
+      };
+      // validate question
+      const { error: err, value } = questionValidation.update(questBody);
+      if (err) {
+        return res.status(400).json({
+          message: err.details[0].message,
+        });
+      }
+      //end
+      //validate if question is existing
+      const checkQuestionIsExist = await tx.question.findFirst({
         where: {
-          question_id: Number(validatedQuestion.question_id),
+          question_id: Number(value.question_id),
         },
       });
-
-      if (!existingQuestion) {
+      if (!checkQuestionIsExist) {
         return res.status(404).json({
           message: "Question not found",
         });
       }
-
-      // Get existing choices for the question
+      //end
+      //choices validate
+      const { error: errorChoice, value: choicesValue } =
+        choicesValidation.update(choicesList);
+      // Check for validation errors
+      if (errorChoice) {
+        return res.status(400).json({
+          message: errorChoice.details[0].message,
+        });
+      }
       const existingChoices = await tx.choices.findMany({
         where: {
-          question_id: validatedQuestion.question_id,
+          question_id: value.question_id,
         },
       });
-
-      // Determine choices to delete
-      const newChoiceIds = validatedChoices.map((choice: ChoicesModel) => choice.choices_id);
+      //end
+      const newChoiceId = choicesList.map(
+        (choice: ChoicesModel) => choice.choices_id
+      );
       const choicesToDelete = existingChoices
-        .filter((choice) => !newChoiceIds.includes(choice.choices_id))
-        .map((choice) => choice.choices_id);
-
-      // Delete choices not in the updated list
-      if (choicesToDelete.length > 0) {
-        await tx.choices.deleteMany({
+        .filter(
+          (existingChoice) => !newChoiceId.includes(existingChoice.choices_id)
+        )
+        .map((item) => item.choices_id);
+      //deleted
+      await tx.choices.deleteMany({
+        where: {
+          choices_id: {
+            in: choicesToDelete,
+          },
+        },
+      });
+      const createManyChoices = choicesValue.map((choice: ChoicesModel) => ({
+        description: choice.description,
+        status: choice.status,
+        choices_id: choice.choices_id,
+      }));
+      for (const ch of createManyChoices) {
+        await prisma.choices.upsert({
           where: {
-            choices_id: {
-              in: choicesToDelete,
-            },
+            choices_id: ch.choices_id || -1,
+          },
+          update: {
+            description: ch.description,
+            status: ch.status,
+          },
+          create: {
+            description: ch.description,
+            status: ch.status,
+            question_id: question_id,
           },
         });
       }
-
-      // Update or create choices
-      await Promise.all(
-        validatedChoices.map(async (choice: ChoicesModel) => {
-          await tx.choices.upsert({
-            where: {
-              choices_id: choice.choices_id || -1,
-            },
-            update: {
-              description: choice.description,
-              status: choice.status,
-            },
-            create: {
-              description: choice.description,
-              status: choice.status,
-              question_id: validatedQuestion.question_id,
-            },
-          });
-        })
-      );
-
       return res.status(200).json({
         message: "Updated successfully",
       });
     });
+  
   } catch (err) {
     return handlePrismaError(err, res);
   }
