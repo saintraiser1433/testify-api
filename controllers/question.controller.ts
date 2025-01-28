@@ -116,100 +116,85 @@ export const updateQuestion = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  // const { question, question_id, choicesList } = req.body;
+  const { question, question_id, choicesList } = req.body;
 
-  // // Validate question
-  // const { error: questionError } = questionValidation.update({
-  //   question,
-  //   question_id,
-  // });
+  // Validate question
+  const { error: questionError } = questionValidation.update({
+    question,
+    question_id,
+  });
 
-  // if (questionError) {
-  //   return handleValidationError(questionError, res);
-  // }
+  if (questionError) {
+    return handleValidationError(questionError, res);
+  }
 
-  // // Validate choices
-  // const { error: choicesError } = choicesValidation.update(choicesList);
+  // Validate choices
+  const { error: choicesError } = choicesValidation.update(choicesList);
 
-  // if (choicesError) {
-  //   return handleValidationError(choicesError, res);
-  // }
+  if (choicesError) {
+    return handleValidationError(choicesError, res);
+  }
 
   try {
     return await prisma.$transaction(async (tx) => {
-      const { question, question_id, choicesList } = req.body;
-      const questBody = {
-        question: question,
-        question_id: question_id,
-      };
-      // validate question
-      const { error: err, value } = questionValidation.update(questBody);
-      if (err) {
-        return res.status(400).json({
-          message: err.details[0].message,
-        });
-      }
-      //end
-      //validate if question is existing
-      const checkQuestionIsExist = await tx.question.findFirst({
-        where: {
-          question_id: Number(value.question_id),
-        },
-      });
-      if (!checkQuestionIsExist) {
-        return res.status(404).json({
-          message: "Question not found",
-        });
-      }
-      //end
-      //choices validate
-      const { error: errorChoice, value: choicesValue } =
-        choicesValidation.update(choicesList);
-      // Check for validation errors
-      if (errorChoice) {
-        return res.status(400).json({
-          message: errorChoice.details[0].message,
-        });
-      }
+
       const existingChoices = await tx.choices.findMany({
         where: {
-          question_id: value.question_id,
+          question_id: question_id,
         },
       });
       //end
       const newChoiceId = choicesList.map(
         (choice: ChoicesModel) => choice.choices_id
       );
+      
+
+
       const choicesToDelete = existingChoices
         .filter(
           (existingChoice) => !newChoiceId.includes(existingChoice.choices_id)
         )
         .map((item) => item.choices_id);
-      //deleted
-      await tx.choices.deleteMany({
-        where: {
-          choices_id: {
-            in: choicesToDelete,
-          },
+
+      await tx.question.update({
+        data: {
+          question: question,
+          choicesList: {
+            deleteMany: {
+              choices_id: {
+                in: choicesToDelete
+              }
+            }
+          }
         },
-      });
-      const createManyChoices = choicesValue.map((choice: ChoicesModel) => ({
-        description: choice.description,
-        status: choice.status,
-        choices_id: choice.choices_id,
-      }));
-      for (const ch of createManyChoices) {
+        where: {
+          question_id: question_id
+        }
+      })
+
+
+      const createManyChoices =
+        choicesList.map((choice: ChoicesModel) => ({
+          description: choice.description,
+          status: choice.status,
+          choices_id: choice.choices_id,
+        }));
+
+
+
+
+      for (const choice of createManyChoices) {
         await prisma.choices.upsert({
           where: {
-            choices_id: ch.choices_id || -1,
+            choices_id: choice.choices_id || -1,
           },
           update: {
-            description: ch.description,
-            status: ch.status,
+            description: choice.description,
+            status: choice.status,
           },
           create: {
-            description: ch.description,
-            status: ch.status,
+            description: choice.description,
+            status: choice.status,
             question_id: question_id,
           },
         });
@@ -218,7 +203,7 @@ export const updateQuestion = async (
         message: "Updated successfully",
       });
     });
-  
+
   } catch (err) {
     return handlePrismaError(err, res);
   }

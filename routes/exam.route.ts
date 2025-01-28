@@ -2,9 +2,9 @@ import { Router } from 'express';
 import {
     getExam,
     getExamId,
-    insertExam,
-    updateExam,
-    deleteExam,
+    insert,
+    update,
+    remove,
     checkIfExamFinished,
     checkExamAvailable
 } from '../controllers/exam.controller';
@@ -19,8 +19,8 @@ route.get('/', authenticateToken, getExam);
 route.get('/:id', authenticateToken, getExamId);
 route.get('/existing/:id', authenticateToken, checkIfExamFinished);
 route.get('/available/:examineeId', authenticateToken, checkExamAvailable);
-route.post('/', authenticateToken, insertExam);
-route.put('/:id', authenticateToken, updateExam);
-route.delete('/:id', authenticateToken, deleteExam)
+route.post('/', authenticateToken, insert);
+route.put('/:id', authenticateToken, update);
+route.delete('/:id', authenticateToken, remove)
 
 export default route;

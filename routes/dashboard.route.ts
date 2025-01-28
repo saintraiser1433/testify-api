@@ -4,6 +4,6 @@ import { authenticateToken } from '../middlewares/auth.middleware';
 
 const route = Router();
 
-route.get('/summary', authenticateToken, getTotalSummary)
+route.get('/summary', getTotalSummary)
 
 export default route;

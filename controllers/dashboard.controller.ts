@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
 import { handlePrismaError } from "../util/prismaErrorHandler";
+import { allResult } from "../services/results.services";
+import { getCourse } from "../services/course.services";
+import { CourseModel, Exam, ExamModel, GroupedCoursesMap, GroupedExamMap, GroupExamPassedMap } from "../models";
+import { getExamService } from "../services/exam.services";
 
 export const getTotalSummary = async (
   req: Request,
@@ -83,6 +87,56 @@ export const getTotalSummary = async (
           keyDate ASC;
           `;
 
+    const allResults = await allResult();
+    const allCourses = await getCourse();
+    const allExam = await getExamService();
+
+    const getCoursePassed = allCourses.reduce((group: GroupedCoursesMap, item: CourseModel) => {
+      for (const ch of allResults) {
+        const courseId = item.course_id;
+        if (!group[courseId]) {
+          group[courseId] = {
+            course_name: item.description,
+            totalPassed: 0
+          };
+        }
+        // Update the condition to include equality
+        const isPassed = ch.totalCorrect >= item.score;
+
+        if (isPassed) {
+          group[courseId].totalPassed++;
+        }
+      }
+      return group;
+    }, {} as GroupedCoursesMap);
+
+
+    // const getExamPassed = allExam.reduce((group: GroupExamPassedMap, item: Exam) => {
+    //   for (const data of allResults) {
+    //     const examId = item.exam_id;
+    //     if (!group[examId]) {
+    //       group[examId] = {
+    //         exam_name: item.exam_title,
+    //         totalPassed: 0
+    //       };
+    //     }
+    //     const percentage = parseInt(((data.totalCorrect / data.totalQuestions) * 100).toFixed(2));
+    //     const isPassed = percentage >
+    //   }
+
+
+
+
+    //   // const isPassed = item.score > ch.totalCorrect;
+
+    //   // if (isPassed) {
+    //   //   group[examId].totalPassed++;
+    //   // }
+
+    //   return group;
+    // }, {} as GroupExamPassedMap)
+
+
 
 
     const finalMap = {
@@ -93,14 +147,14 @@ export const getTotalSummary = async (
         totalExams: examCount
       },
       regExaminee: registeredExaminee,
-      comExaminee: completedExaminees
-
+      comExaminee: completedExaminees,
+      coursesPassed: Object.values(getCoursePassed)
 
 
     }
 
     return res.status(200).json(finalMap);
-  } catch (err: any) {
+  } catch (err) {
     return handlePrismaError(err, res);
 
   }

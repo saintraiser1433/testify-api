@@ -25,14 +25,14 @@ export const appLogger = createLogger({
     exitOnError: false
 });
 
-// if (process.env.NODE_ENV === 'development') {
-//     appLogger.add(new transports.Console({
-//         format: format.combine(
-//             format.colorize(),
-//             format.simple()
-//         )
-//     }));
-// }
+if (process.env.NODE_ENV === 'development') {
+    appLogger.add(new transports.Console({
+        format: format.combine(
+            format.colorize(),
+            format.simple()
+        )
+    }));
+}
 
 // Express middleware logger
 export const expressLogger = expressWinston.logger({

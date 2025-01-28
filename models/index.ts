@@ -21,9 +21,9 @@ export interface ExamineeModel extends Timestamped {
 
 // Course Model
 export interface CourseModel extends Timestamped {
-    course_id?: number;
+    course_id: number;
     description: string;
-    score: string;
+    score: number;
     assignDeansList?: AssignDeansModel[]; // Optional relationship
 }
 
@@ -164,26 +164,6 @@ export interface ExamDetailsModel {
     }[];
 }
 
-//to be delete
-export interface SummaryResult {
-    examinee_id: string,
-    first_name: string,
-    last_name: string,
-    middle_name: string,
-    birth_date: string,
-    school: string,
-    email: string,
-    address: string,
-    contact_number: string,
-    examattempt: number,
-    examcnt: number,
-    exam_id: number,
-    exam_title: string,
-    correctAnswers: number,
-    totalQuestions: number,
-
-}
-
 
 //for results summary
 export interface Answer {
@@ -211,16 +191,51 @@ export interface Question {
 
 }
 
-export interface GroupedExam {
+
+export interface FollowUpModel {
+    gender: string,
+    birth_date: string,
+    contact_number: string,
+    school: string,
+    email: string,
+    address: string
+}
+export interface UserInformation extends FollowUpModel, TheTotal {
+    examinee_id: true,
+    first_name: string,
+    middle_name: string,
+    last_name: string,
+
+}
+
+export interface TheTotal {
+    totalCorrect: number,
+    totalQuestions: number
+}
+
+
+interface GroupedExam {
     exam_id?: number;
     exam_title?: string;
     totalQuestions: number;
     correctAnswers: number;
 }
 
+interface GroupCoursesPassed {
+    course_name: string;
+    totalPassed: number;
+}
+
+interface GroupExamPassed {
+    exam_name: string;
+    totalPassed: number
+}
+
+
 export type GroupedExamMap = Record<number, GroupedExam>;
-
-
+export type GroupedCoursesMap = Record<number, GroupCoursesPassed>;
+export type GroupExamPassedMap = Record<number, GroupExamPassed>;
+// export type GroupedExamPassedMap = Record<number, GroupCoursesPassed>;
 
 
 interface UserPayload {
@@ -232,7 +247,7 @@ interface UserPayload {
 
 declare module 'express' {
     interface Request {
-        user?: UserPayload; 
+        user?: UserPayload;
     }
 }
 

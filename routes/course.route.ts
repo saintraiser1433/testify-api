@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import {
-    getCourse,
+    getAllCourse,
     getCourseNoAssociated,
-    insertCourse,
-    updateCourse,
-    deleteCourse
+    insert,
+    update,
+    remove
 } from '../controllers/course.controller';
 import { authenticateToken } from '../middlewares/auth.middleware';
 
@@ -12,10 +12,10 @@ import { authenticateToken } from '../middlewares/auth.middleware';
 const route = Router();
 
 
-route.get('/', authenticateToken, getCourse);
+route.get('/', authenticateToken, getAllCourse);
 route.get('/filtered', authenticateToken, getCourseNoAssociated);
-route.post('/', authenticateToken, insertCourse);
-route.put('/:id', authenticateToken, updateCourse);
-route.delete('/:id', authenticateToken, deleteCourse)
+route.post('/', authenticateToken, insert);
+route.put('/:id', authenticateToken, update);
+route.delete('/:id', authenticateToken, remove)
 
 export default route;

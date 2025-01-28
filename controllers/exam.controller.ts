@@ -2,9 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import prisma from "../prisma/prisma";
 import { examValidation, handleValidationError } from "../util/validation";
 import { ExamHeader } from "../models";
-import { appLogger } from "../util/logger";
-import { Prisma } from "@prisma/client";
+
 import { handlePrismaError } from "../util/prismaErrorHandler";
+import { getExamByIdService, getExamService } from "../services/exam.services";
 
 export const getExam = async (
   req: Request,
@@ -12,19 +12,8 @@ export const getExam = async (
   next: NextFunction
 ): Promise<Response> => {
   try {
-    const data = await prisma.exam.findMany({
-      select: {
-        exam_id: true,
-        description: true,
-        exam_title: true,
-        status: true,
-        time_limit: true,
-      },
-      orderBy: {
-        exam_id: "asc",
-      },
-    });
-    return res.status(200).json(data);
+    const response = await getExamService()
+    return res.status(200).json(response);
   } catch (err: any) {
     return handlePrismaError(err, res);
 
@@ -39,18 +28,14 @@ export const getExamId = async (
 ): Promise<Response> => {
   const id = req.params.id;
   try {
-    const response = await prisma.exam.findFirstOrThrow({
-      where: {
-        exam_id: Number(id),
-      },
-    });
+    const response = await getExamByIdService(id)
     return res.status(200).json(response);
   } catch (err: any) {
     return handlePrismaError(err, res);
   }
 };
 
-export const insertExam = async (
+export const insert = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -89,7 +74,7 @@ export const insertExam = async (
   }
 };
 
-export const updateExam = async (
+export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
@@ -118,7 +103,7 @@ export const updateExam = async (
 
 };
 
-export const deleteExam = async (req: Request, res: Response): Promise<Response> => {
+export const remove = async (req: Request, res: Response): Promise<Response> => {
   const id = req.params.id;
   try {
     await prisma.exam.delete({
