@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { handlePrismaError } from "../util/prismaErrorHandler";
-import { listOfQuestions, userInformation, countAttempt, countOfExam, allResult, groupSummaryByExam } from "../services/results.services";
+import { listOfQuestionsById, userInformation, countAttempt, countOfExam, allResult, groupSummaryByExam } from "../services/results.services";
 
 
 
@@ -14,7 +14,7 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
 
   try {
     const [questions, userInfo, attemptCount, examCount] = await Promise.all([
-      listOfQuestions(id),
+      listOfQuestionsById(id),
       userInformation(id),
       countAttempt(id),
       countOfExam(id),

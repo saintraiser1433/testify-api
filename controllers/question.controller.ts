@@ -1,5 +1,6 @@
+// controllers/questionController.ts
 import { NextFunction, Request, Response } from "express";
-import prisma from "../prisma/prisma";
+import * as questionService from "../services/question.services";
 import { choicesValidation, handleValidationError, questionValidation } from "../util/validation";
 import { ChoicesModel } from "../models";
 import { handlePrismaError } from "../util/prismaErrorHandler";
@@ -11,37 +12,7 @@ export const getQuestion = async (
 ): Promise<Response> => {
   const id = req.params.id;
   try {
-    // const checkIfExist = await prisma.exam.findFirst({
-    //   where: {
-    //     exam_id: Number(id),
-    //   },
-    // });
-
-    // if (!checkIfExist) {
-    //   return res.status(404).json({
-    //     error: "Exam not found",
-    //   });
-    // }
-
-    const data = await prisma.question.findMany({
-      select: {
-        question_id: true,
-        question: true,
-        choicesList: {
-          select: {
-            choices_id: true,
-            description: true,
-            status: true,
-          },
-        },
-      },
-      where: {
-        exam_id: Number(id),
-      },
-      orderBy: {
-        question_id: "asc",
-      },
-    });
+    const data = await questionService.getQuestionsByExamId(Number(id));
     return res.status(200).json(data);
   } catch (err: any) {
     return handlePrismaError(err, res);
@@ -77,35 +48,10 @@ export const insertQuestion = async (
   }
 
   try {
-    return await prisma.$transaction(async (tx) => {
-      const results = await tx.question.create({
-        data: {
-          question: question,
-          exam_id: exam_id,
-          choicesList: {
-            create: choicesData,
-          },
-        },
-        include: {
-          choicesList: true
-        }
-      })
-
-      const resultMap = {
-        question_id: results.question_id,
-        question: results.question,
-        choicesList: results.choicesList.map((item) => ({
-          choices_id: item.choices_id,
-          description: item.description,
-          status: item.status
-        }))
-      }
-
-
-      return res.status(201).json({
-        message: "Created successfully",
-        data: resultMap
-      });
+    const result = await questionService.createQuestion(question, exam_id, choicesList);
+    return res.status(201).json({
+      message: "Created successfully",
+      data: result,
     });
   } catch (err) {
     return handlePrismaError(err, res);
@@ -136,74 +82,10 @@ export const updateQuestion = async (
   }
 
   try {
-    return await prisma.$transaction(async (tx) => {
-
-      const existingChoices = await tx.choices.findMany({
-        where: {
-          question_id: question_id,
-        },
-      });
-      //end
-      const newChoiceId = choicesList.map(
-        (choice: ChoicesModel) => choice.choices_id
-      );
-      
-
-
-      const choicesToDelete = existingChoices
-        .filter(
-          (existingChoice) => !newChoiceId.includes(existingChoice.choices_id)
-        )
-        .map((item) => item.choices_id);
-
-      await tx.question.update({
-        data: {
-          question: question,
-          choicesList: {
-            deleteMany: {
-              choices_id: {
-                in: choicesToDelete
-              }
-            }
-          }
-        },
-        where: {
-          question_id: question_id
-        }
-      })
-
-
-      const createManyChoices =
-        choicesList.map((choice: ChoicesModel) => ({
-          description: choice.description,
-          status: choice.status,
-          choices_id: choice.choices_id,
-        }));
-
-
-
-
-      for (const choice of createManyChoices) {
-        await prisma.choices.upsert({
-          where: {
-            choices_id: choice.choices_id || -1,
-          },
-          update: {
-            description: choice.description,
-            status: choice.status,
-          },
-          create: {
-            description: choice.description,
-            status: choice.status,
-            question_id: question_id,
-          },
-        });
-      }
-      return res.status(200).json({
-        message: "Updated successfully",
-      });
+    await questionService.updateQuestion(question, question_id, choicesList);
+    return res.status(200).json({
+      message: "Updated successfully",
     });
-
   } catch (err) {
     return handlePrismaError(err, res);
   }
@@ -215,11 +97,7 @@ export const deleteQuestion = async (
 ): Promise<Response> => {
   const id = req.params.id;
   try {
-    await prisma.question.delete({
-      where: {
-        question_id: Number(id),
-      },
-    });
+    await questionService.deleteQuestion(Number(id));
     return res.status(200).json({
       message: "Question deleted successfully",
     });

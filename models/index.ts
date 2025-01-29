@@ -226,11 +226,23 @@ interface GroupCoursesPassed {
     totalPassed: number;
 }
 
-interface GroupExamPassed {
-    exam_name: string;
-    totalPassed: number
+export interface TheTotal {
+    totalCorrect: number,
+    totalQuestions: number
 }
 
+interface GroupExamPassed extends TheTotal {
+    exam_id: number;
+    exam_title: string;
+    totalPercentage: number;
+    totalAttempt: number;
+}
+
+//dashboard
+export interface RegisterCompletedModel {
+    keyDate: string,
+    count: number,
+}
 
 export type GroupedExamMap = Record<number, GroupedExam>;
 export type GroupedCoursesMap = Record<number, GroupCoursesPassed>;

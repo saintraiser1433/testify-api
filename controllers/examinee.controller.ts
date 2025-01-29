@@ -1,7 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import prisma from "../prisma/prisma";
 import { examineeValidation, handleValidationError } from "../util/validation";
 import { handlePrismaError } from "../util/prismaErrorHandler";
+import {
+  fetchExaminees,
+  findExamineeByName,
+  createExaminee,
+  updateExamineeById,
+  deleteExamineeById,
+} from "../services/examinee.services";
 
 export const getExaminee = async (
   req: Request,
@@ -9,18 +15,7 @@ export const getExaminee = async (
   next: NextFunction
 ): Promise<Response> => {
   try {
-    const data = await prisma.user.findMany({
-      select: {
-        id: true,
-        first_name: true,
-        last_name: true,
-        middle_name: true,
-        username: true,
-      },
-      where: {
-        role: "examinee",
-      },
-    });
+    const data = await fetchExaminees();
     return res.status(200).json(data);
   } catch (err: any) {
     return handlePrismaError(err, res);
@@ -36,38 +31,18 @@ export const insertExaminee = async (
   try {
     const { error, value } = examineeValidation.insert(body);
 
-    if (error) {
-      return handleValidationError(error, res);
-    }
+    if (error) return handleValidationError(error, res);
 
-    const user = await prisma.user.findFirst({
-      where: {
-        AND: [
-          { first_name: value.first_name },
-          { last_name: value.last_name },
-          { middle_name: value.middle_name },
-          { role: "examinee" },
-        ],
-      },
-    });
-
+    const user = await findExamineeByName(value.first_name, value.last_name, value.middle_name);
     if (user) {
-      return res.status(409).json({
-        message: "Student already exist",
-      });
+      return res.status(409).json({ message: "Student already exists" });
     }
 
-    const response = await prisma.user.create({
-      data: value,
-    });
-    return res.status(201).json({
-      message: "Student created successfully",
-      data: response,
-    });
+    const response = await createExaminee(value);
+    return res.status(201).json({ message: "Student created successfully", data: response });
   } catch (err) {
     return handlePrismaError(err, res);
   }
-
 };
 
 export const updateExaminee = async (
@@ -79,26 +54,13 @@ export const updateExaminee = async (
   try {
     const { error, value } = examineeValidation.update(body);
 
-    if (error) {
-      return handleValidationError(error, res);
-    }
+    if (error) return handleValidationError(error, res);
 
-
-    const response = await prisma.user.update({
-      where: {
-        id: id,
-      },
-      data: value,
-    });
-
-    return res.status(200).json({
-      message: "Student updated successfully",
-      data: response,
-    });
+    const response = await updateExamineeById(id, value);
+    return res.status(200).json({ message: "Student updated successfully", data: response });
   } catch (err) {
     return handlePrismaError(err, res);
   }
-
 };
 
 export const deleteExaminee = async (
@@ -107,14 +69,8 @@ export const deleteExaminee = async (
 ): Promise<Response> => {
   const id = req.params.id;
   try {
-    await prisma.user.delete({
-      where: {
-        id: id,
-      },
-    });
-    return res.status(200).json({
-      message: "Student deleted successfully",
-    });
+    await deleteExamineeById(id);
+    return res.status(200).json({ message: "Student deleted successfully" });
   } catch (err) {
     return handlePrismaError(err, res);
   }

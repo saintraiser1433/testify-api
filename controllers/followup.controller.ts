@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import prisma from "../prisma/prisma";
 import { handlePrismaError } from "../util/prismaErrorHandler";
-
+import * as followupService from "../services/followup.services";
 export const insertFollowUp = async (
   req: Request,
   res: Response,
@@ -10,9 +9,7 @@ export const insertFollowUp = async (
   const body = req.body;
 
   try {
-    const data = await prisma.followUp.create({
-      data: body,
-    });
+    const data = await followupService.insertFollowUp(body);
 
     return res.status(201).json({
       status: res.statusCode,
@@ -32,12 +29,7 @@ export const getFollowup = async (
   const examineeId = req.params.examineeId;
 
   try {
-    const checkFollowupData = await prisma.followUp.findFirst({
-      where: {
-        examinee_id: examineeId,
-      },
-    });
-
+    const checkFollowupData = await followupService.getFollowup(examineeId);
     return res.status(200).send(checkFollowupData);
   } catch (err: any) {
     return handlePrismaError(err, res);

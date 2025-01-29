@@ -1,7 +1,7 @@
-import { GroupedExamMap, Question, QuestionModel, UserInformation } from "../models";
+import { GroupedExamMap, GroupExamPassedMap, Question, QuestionModel, UserInformation } from "../models";
 import prisma from "../prisma/prisma";
 
-export const listOfQuestions = async (id: string) => {
+export const listOfQuestionsById = async (id: string) => {
     try {
         const result = await prisma.question.findMany({
             select: {
@@ -39,6 +39,56 @@ export const listOfQuestions = async (id: string) => {
                             none: {
                                 examinee_id: id
                             }
+                        }
+                    }
+                }
+            },
+
+            orderBy: {
+                exam_id: 'asc',
+            }
+        })
+
+        return result;
+    } catch (err) {
+        throw err
+    }
+
+}
+
+export const listOfQuestionsSummary = async () => {
+    try {
+        const result = await prisma.question.findMany({
+            select: {
+                question: true,
+                question_id: true,
+                examList: {
+                    select: {
+                        exam_id: true,
+                        exam_title: true,
+                    },
+
+                },
+                choicesList: {
+                    select: {
+                        choices_id: true,
+                        description: true,
+                        status: true,
+                        answersList: {
+                            select: {
+                                examinee_id:true,
+                                choices_id: true,
+                            }
+                        }
+                    }
+                },
+
+            },
+            where: {
+                choicesList: {
+                    some: {
+                        answersList: {
+                            none: {}
                         }
                     }
                 }
@@ -167,6 +217,9 @@ export const groupSummaryByExam = async (data: Question[]) => {
 
 
 
+
+
+
 export const allResult = async (): Promise<UserInformation[]> => {
     try {
         const [result, countQuestions] = await Promise.all([
@@ -222,7 +275,8 @@ export const allResult = async (): Promise<UserInformation[]> => {
                             first_name: answer.examineeList.first_name,
                             last_name: answer.examineeList.last_name,
                             middle_name: answer.examineeList.middle_name,
-                            birth_date: answer.examineeList.followupData[0]?.birth_date || '',
+                            birth_date:
+                                answer.examineeList.followupData[0]?.birth_date || '',
                             school: answer.examineeList.followupData[0]?.school || '',
                             email: answer.examineeList.followupData[0]?.email || '',
                             address: answer.examineeList.followupData[0]?.address || '',
