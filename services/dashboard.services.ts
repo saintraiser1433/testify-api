@@ -1,9 +1,19 @@
 // services/summaryService.ts
 
-import { RegisterCompletedModel } from "../models";
+import { KeyValue } from "../models";
 import prisma from "../prisma/prisma";
 
 
+export const getExamineeCount = async() => {
+  return await prisma.user.count({
+    where: {
+      role: 'examinee'
+    }
+  })
+}
+
+
+  
 
 export const getCourseCount = async () => {
     return await prisma.course.count();
@@ -18,32 +28,32 @@ export const getExamCount = async () => {
 };
 
 
-export const getRegisteredExaminee = async (): Promise<RegisterCompletedModel[]> => {
+export const getRegisteredExaminee = async (): Promise<KeyValue[]> => {
     return await prisma.$queryRaw`
     SELECT 
-      TO_CHAR(DATE("createdAt"), 'Mon DD, YYYY') as keyDate,
-      COUNT(*)::integer as count 
+      TO_CHAR(DATE("createdAt"), 'Mon DD, YYYY') as "name",
+      COUNT(*)::integer as "value" 
     FROM 
       "User" 
     WHERE role = 'examinee'
     GROUP BY 
-      keyDate
+    name
     ORDER BY 
-      keyDate ASC;
+    name ASC;
   `;
 };
 
-export const getCompletedExaminees = async (): Promise<RegisterCompletedModel[]> => {
+export const getCompletedExaminees = async (): Promise<KeyValue[]> => {
     return await prisma.$queryRaw`
     SELECT 
-      TO_CHAR(DATE("createdAt"), 'Mon DD, YYYY') as keyDate,
-      COUNT(DISTINCT examinee_id)::integer as count
+      TO_CHAR(DATE("createdAt"), 'Mon DD, YYYY') as "name",
+      COUNT(DISTINCT examinee_id)::integer as "value"
     FROM 
       "ExamAttempt"
     GROUP BY
-      keyDate
+    name
     ORDER BY 
-      keyDate ASC;
+    name ASC;
   `;
 };
 
@@ -77,13 +87,13 @@ export const getCoursePassed = async (allResults: any[], allCourses: any[]) => {
             const courseId = item.course_id;
             if (!group[courseId]) {
                 group[courseId] = {
-                    course_name: item.description,
-                    totalPassed: 0
+                    name: item.description,
+                    value: 0
                 };
             }
             const isPassed = ch.totalCorrect >= item.score;
             if (isPassed) {
-                group[courseId].totalPassed++;
+                group[courseId].value++;
             }
         }
         return group;

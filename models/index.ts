@@ -239,9 +239,9 @@ interface GroupExamPassed extends TheTotal {
 }
 
 //dashboard
-export interface RegisterCompletedModel {
-    keyDate: string,
-    count: number,
+export interface KeyValue {
+    name: string,
+    value: number,
 }
 
 export type GroupedExamMap = Record<number, GroupedExam>;

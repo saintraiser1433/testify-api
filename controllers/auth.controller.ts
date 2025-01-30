@@ -38,7 +38,7 @@ export const signIn = async (
       // const isCorrect = await bcrypt.compare(password, user.password)
 
       if (password !== user.password) {
-        return res.status(401).json({ error: "Incorrect Credentials" });
+        return res.status(401).json({ message: "Incorrect Credentials" });
       }
       const users: DecodedPayload = {
         id: user.id,
@@ -62,7 +62,7 @@ export const signIn = async (
       });
       return res.status(201).json({ token: { accessToken, refreshToken } });
     }
-    return res.status(401).json({ error: "Incorrect Credentialss" });
+    return res.status(401).json({ message: "Incorrect Credentials" });
   } catch (err: any) {
     return handlePrismaError(err, res);
   }

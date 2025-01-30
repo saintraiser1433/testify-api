@@ -23,8 +23,8 @@ export const getTotalSummary = async (
     const getCoursePassed = await dashboardService.getCoursePassed(allResults, allCourses);
 
 
-    const regCount = registeredExaminee.reduce((a, b) => a + b.count, 0);
-    const comCount = completeExaminee.reduce((a, b) => a + b.count, 0);
+    const regCount = registeredExaminee.reduce((a, b) => a + b.value, 0);
+    const comCount = completeExaminee.reduce((a, b) => a + b.value, 0);
 
     const finalMap = {
       summary: {
