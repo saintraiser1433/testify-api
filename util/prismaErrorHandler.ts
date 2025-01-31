@@ -33,7 +33,7 @@ export const handlePrismaError = (error: unknown, res: Response): Response => {
             case 'P2003':
                 // Foreign key constraint violation
                 return res.status(400).json({
-                    message: "Invalid reference: The related record does not exist",
+                    message: "Error! Please remove first connected data before deleting the parent",
                 });
             case 'P2000':
                 // Data too long for column

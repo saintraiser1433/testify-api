@@ -15,13 +15,29 @@ export const fetchExaminees = async () => {
   });
 };
 
-export const findExamineeByName = async (first_name: string, last_name: string, middle_name: string) => {
+export const findExamineeByName = async (
+  first_name: string,
+  last_name: string,
+  middle_name: string
+) => {
   return await prisma.user.findFirst({
     where: {
       AND: [
-        { first_name },
-        { last_name },
-        { middle_name },
+        {
+          first_name: {
+            startsWith: first_name,
+            mode: "insensitive",
+          },
+        },
+        {
+          last_name: {
+            startsWith: last_name,
+            mode: "insensitive",
+          },
+        },
+        {
+          middle_name,
+        },
         { role: "examinee" },
       ],
     },

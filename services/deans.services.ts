@@ -91,3 +91,31 @@ export const getDeans = async () => {
       },
     });
   };
+
+  export const checkIfDeansExist = async (
+    first_name: string,
+    last_name: string,
+    middle_name: string
+  ) => {
+    return await prisma.deans.findFirst({
+      where: {
+        AND: [
+          {
+            first_name: {
+              startsWith: first_name,
+              mode: "insensitive",
+            },
+          },
+          {
+            last_name: {
+              startsWith: last_name,
+              mode: "insensitive",
+            },
+          },
+          {
+            middle_name,
+          },
+        ],
+      },
+    });
+  };

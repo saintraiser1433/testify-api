@@ -1,7 +1,6 @@
 import { DepartmentModel } from "../models";
 import prisma from "../prisma/prisma";
 
-
 export const getDepartments = async (): Promise<DepartmentModel[]> => {
   return await prisma.department.findMany({
     select: {
@@ -11,6 +10,17 @@ export const getDepartments = async (): Promise<DepartmentModel[]> => {
     },
     orderBy: {
       department_id: "asc",
+    },
+  });
+};
+
+export const checkDepartmentIfExist = async (departmentName: string) => {
+  return await prisma.department.findFirst({
+    where: {
+      department_name: {
+        startsWith: departmentName,
+        mode: "insensitive",
+      },
     },
   });
 };
