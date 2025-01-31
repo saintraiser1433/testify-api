@@ -11,30 +11,28 @@ export const getTotalSummary = async (
   next: NextFunction
 ): Promise<Response> => {
   try {
-    const [courseCount, examCount, registeredExaminee, completeExaminee, examPassed, allResults, allCourses] = await Promise.all([
-      dashboardService.getCourseCount(),
+    const [examCount, summary, examPassed, summaryQuestions, allResults, allCourses] = await Promise.all([
       dashboardService.getExamCount(),
-      dashboardService.getRegisteredExaminee(),
-      dashboardService.getCompletedExaminees(),
+      dashboardService.getRegisteredVsCompletedExaminees(),
       dashboardService.getExamPassed(),
-      allResult(), 
-      getCourse()  
+      dashboardService.getQuestionPercentage(),
+      allResult(),
+      getCourse()
     ]);
     const getCoursePassed = await dashboardService.getCoursePassed(allResults, allCourses);
-
-
-    const regCount = registeredExaminee.reduce((a, b) => a + b.value, 0);
-    const comCount = completeExaminee.reduce((a, b) => a + b.value, 0);
+    const registeredExaminee = summary.reduce((a, b) => a + b.Registered, 0);
+    const completedExaminee = summary.reduce((a, b) => a + b.Completed, 0);
+    const courseCount = allCourses.length;
 
     const finalMap = {
       summary: {
-        registeredExaminee: regCount,
-        completedExaminee: comCount,
+        registeredExaminee: registeredExaminee,
+        completedExaminee: completedExaminee,
         totalCourse: courseCount,
         totalExams: examCount
       },
-      regExaminee: registeredExaminee,
-      comExaminee: completeExaminee,
+      dailyRegisterVsCompleted: summary,
+      summaryQuestions: summaryQuestions,
       coursesPassed: Object.values(getCoursePassed),
       examPassed: examPassed
     };

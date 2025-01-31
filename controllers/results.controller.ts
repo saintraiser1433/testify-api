@@ -32,8 +32,8 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
       email: userInfo?.followupData?.[0]?.email || '',
       address: userInfo?.followupData?.[0]?.address || '',
       contact_number: userInfo?.followupData?.[0]?.contact_number || '',
-      examineeAttempt: attemptCount,
-      totalExams: examCount,
+      examineeAttempt: attemptCount._count,
+      totalExams: examCount._count,
       examDetails: groupSummary,
     };
 
