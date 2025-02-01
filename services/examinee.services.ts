@@ -36,7 +36,10 @@ export const findExamineeByName = async (
           },
         },
         {
-          middle_name,
+          middle_name: {
+            startsWith: middle_name,
+            mode: "insensitive",
+          },
         },
         { role: "examinee" },
       ],

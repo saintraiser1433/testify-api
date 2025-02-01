@@ -56,6 +56,10 @@ export const updateExaminee = async (
 
     if (error) return handleValidationError(error, res);
 
+    const user = await findExamineeByName(value.first_name, value.last_name, value.middle_name);
+    if (user) {
+      return res.status(409).json({ message: "Student already exists" });
+    }
     const response = await updateExamineeById(id, value);
     return res.status(200).json({ message: "Student updated successfully", data: response });
   } catch (err) {
