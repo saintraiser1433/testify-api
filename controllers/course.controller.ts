@@ -1,18 +1,17 @@
 import { NextFunction, Request, Response } from "express";
 import { courseValidation, handleValidationError } from "../util/validation";
-import { handlePrismaError } from "../util/prismaErrorHandler";
-import { courseNoAssociated, deleteCourse, getCourse, insertCourse, updateCourse } from "../services/course.services";
+import { checkCourseIfExist, courseNoAssociated, deleteCourse, getCourse, getCourseById, insertCourse, updateCourse } from "../services/course.services";
 
 export const getAllCourse = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   try {
     const data = await getCourse();
     return res.status(200).json(data);
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err)
   }
 };
 
@@ -20,12 +19,12 @@ export const getCourseNoAssociated = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   try {
     const data = await courseNoAssociated()
     return res.status(200).json(data);
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err)
   }
 };
 
@@ -33,12 +32,17 @@ export const insert = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const body = req.body;
   try {
-    const { error } = courseValidation.insert(body);
+    const { error, value } = courseValidation.insert(body);
     if (error) {
-      return handleValidationError(error, res);
+      next(error)
+    }
+
+    const existingCourse = await checkCourseIfExist(value.description);
+    if (existingCourse) {
+      return res.status(409).json({ message: "Course already exists" });
     }
 
     const response = await insertCourse(body);
@@ -47,21 +51,34 @@ export const insert = async (
       data: response,
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 };
 
 export const update = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const body = req.body;
   const id = req.params.id;
   try {
-    const { error } = courseValidation.update(body);
+    const { error, value } = courseValidation.update(body);
 
     if (error) {
-      return handleValidationError(error, res);
+      next(error)
+    }
+
+    const existingCourse = await getCourseById(Number(req.params.id));
+    if (!existingCourse) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    if (value.description !== existingCourse.description) {
+      const existingCourse = await checkCourseIfExist(value.description);
+      if (existingCourse) {
+        return res.status(409).json({ message: "Course already exists" });
+      }
     }
 
     const response = await updateCourse(body, id);
@@ -70,15 +87,16 @@ export const update = async (
       data: response,
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 
 };
 
 export const remove = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const id = req.params.id;
   try {
     await deleteCourse(id);
@@ -86,7 +104,7 @@ export const remove = async (
       message: "Course deleted successfully",
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 
 };

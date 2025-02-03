@@ -26,7 +26,7 @@ export const getQuestionsByExamId = async (examId: number) => {
   });
 };
 
-export const createQuestion = async (
+export const createQuestionFunc = async (
   question: string,
   exam_id: number,
   choicesList: ChoicesModel[]
@@ -60,7 +60,7 @@ export const createQuestion = async (
   });
 };
 
-export const updateQuestion = async (
+export const updateQuestionFunc = async (
   question: string,
   question_id: number,
   choicesList: ChoicesModel[]
@@ -112,7 +112,7 @@ export const updateQuestion = async (
   });
 };
 
-export const deleteQuestion = async (questionId: number) => {
+export const deleteQuestionFunc = async (questionId: number) => {
   return await prisma.question.delete({
     where: {
       question_id: questionId,

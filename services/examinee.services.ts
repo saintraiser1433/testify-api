@@ -47,6 +47,12 @@ export const findExamineeByName = async (
   });
 };
 
+export const getExamineeById = async (id: string) => {
+  return await prisma.user.findUnique({
+    where: { id }
+  })
+}
+
 export const createExaminee = async (data: any) => {
   return await prisma.user.create({ data });
 };

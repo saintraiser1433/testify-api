@@ -2,7 +2,7 @@
 import { answerModel, GroupedExamMap, Question } from "../models";
 import prisma from "../prisma/prisma";
 
-export const insertAnswer = async (body: any) => {
+export const insertAnswerFunc = async (body: any) => {
   return await prisma.$transaction(async (tx) => {
     // Insert exam attempt
     await tx.examAttempt.create({
@@ -26,7 +26,7 @@ export const insertAnswer = async (body: any) => {
   });
 };
 
-export const getSessionAnswer = async (examineeId: string, examId: string) => {
+export const getSessionAnswerFunc = async (examineeId: string, examId: string) => {
   return await prisma.sessionHeader.findMany({
     select: {
       session_id: true,
@@ -47,7 +47,7 @@ export const getSessionAnswer = async (examineeId: string, examId: string) => {
   });
 };
 
-export const upsertSessionAnswer = async (
+export const upsertSessionAnswerFunc = async (
   examinee_id: string,
   exam_id: string,
   time_limit: string,
@@ -91,7 +91,7 @@ export const upsertSessionAnswer = async (
   });
 };
 
-export const updateSessionTime = async (
+export const updateSessionTimeFunc = async (
   examineeId: string,
   examId: string,
   time_limit: string
@@ -117,7 +117,7 @@ export const updateSessionTime = async (
 
 };
 
-export const deleteSessionAnswer = async (examineeId: string, examId: string) => {
+export const deleteSessionAnswerFunc = async (examineeId: string, examId: string) => {
   const sessionId = await prisma.sessionHeader.findFirst({
     where: {
       examinee_id: examineeId,
@@ -136,7 +136,7 @@ export const deleteSessionAnswer = async (examineeId: string, examId: string) =>
   });
 };
 
-export const consolidateMyAnswer = async (examineeId: string, examId: string) => {
+export const consolidateMyAnswerFunc = async (examineeId: string, examId: string) => {
   const result = await prisma.question.findMany({
     select: {
       question: true,

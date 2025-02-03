@@ -1,18 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
-import * as deanService from '../services/deans.services';
+import { getDeansFunc, insertDeansFunc, updateDeansFunc, deleteDeansFunc, assignDeansFunc, getAssignDeansFunc, deleteAssignDeansFunc, getDeansById, findDeansByName } from '../services/deans.services';
 import { deansValidation, handleValidationError } from '../util/validation';
-import { handlePrismaError } from '../util/prismaErrorHandler';
+
 
 export const getDeans = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   try {
-    const data = await deanService.getDeans();
+    const data = await getDeansFunc();
     return res.status(200).json(data);
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -20,58 +20,81 @@ export const insertDeans = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const body = req.body;
   try {
     const { error, value } = deansValidation.insert(body);
     if (error) {
-      return handleValidationError(error, res);
+      next(error)
     }
 
-    const response = await deanService.insertDeans(value);
+    const existingDeans = await findDeansByName(value.first_name, value.last_name, value.middle_name);
+    if (existingDeans) {
+      return res.status(409).json({ message: "Deans already exists" });
+    }
+
+    const response = await insertDeansFunc(value);
     return res.status(201).json({
       message: 'Dean created successfully',
       data: response,
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err);
   }
 };
 
 export const updatedDeans = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const id = req.params.id;
   const body = req.body;
   try {
     const { error, value } = deansValidation.update(body);
     if (error) {
-      return handleValidationError(error, res);
+      next(error)
     }
 
-    const response = await deanService.updateDeans(id, value);
+    const existingDeans = await getDeansById(Number(req.params.id));
+    if (!existingDeans) {
+      return res.status(404).json({ message: "Deans not found" });
+    }
+
+    if (
+      value.first_name !== existingDeans.first_name &&
+      value.last_name !== existingDeans.last_name &&
+      value.middle_name !== existingDeans.middle_name
+    ) {
+      const existingDeans = await findDeansByName(value.first_name, value.last_name, value.middle_name);
+      if (existingDeans) {
+        return res.status(409).json({ message: "Deans already exists" });
+      }
+    }
+
+    const response = await updateDeansFunc(id, value);
     return res.status(200).json({
       message: 'Deans updated successfully',
       data: response,
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err);
   }
 };
 
 export const deleteDeans = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const id = req.params.id;
   try {
-    await deanService.deleteDeans(id);
+    await deleteDeansFunc(id);
     return res.status(201).json({
       message: 'Dean deleted successfully',
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err);
   }
 };
 
@@ -79,16 +102,16 @@ export const assignDeans = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const body = req.body;
   try {
-    const response = await deanService.assignDeans(body);
+    const response = await assignDeansFunc(body);
     return res.status(201).json({
       message: 'Successfully assigned course',
       data: response,
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 };
 
@@ -96,13 +119,13 @@ export const getAssignDeans = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const id = req.params.id;
   try {
-    const data = await deanService.getAssignDeans(id);
+    const data = await getAssignDeansFunc(id);
     return res.status(200).json(data);
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -110,16 +133,16 @@ export const deleteAssignDeans = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const deansId = req.params.deansId;
   const courseId = req.params.courseId;
   try {
-    const response = await deanService.deleteAssignDeans(deansId, courseId);
+    const response = await deleteAssignDeansFunc(deansId, courseId);
     return res.status(200).json({
       message: 'Deleted successfully',
       data: response,
     });
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err)
   }
 };

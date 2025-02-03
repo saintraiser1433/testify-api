@@ -1,7 +1,7 @@
 // controllers/summaryController.ts
 import { Request, Response, NextFunction } from 'express';
-import * as dashboardService from '../services/dashboard.services';
-import { handlePrismaError } from '../util/prismaErrorHandler';
+import { getCoursePassedFunc, getExamCount, getExamPassed, getQuestionPercentage, getRegisteredVsCompletedExaminees } 
+from '../services/dashboard.services';
 import { allResult } from '../services/results.services';
 import { getCourse } from '../services/course.services';
 
@@ -9,17 +9,17 @@ export const getTotalSummary = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   try {
     const [examCount, summary, examPassed, summaryQuestions, allResults, allCourses] = await Promise.all([
-      dashboardService.getExamCount(),
-      dashboardService.getRegisteredVsCompletedExaminees(),
-      dashboardService.getExamPassed(),
-      dashboardService.getQuestionPercentage(),
+      getExamCount(),
+      getRegisteredVsCompletedExaminees(),
+      getExamPassed(),
+      getQuestionPercentage(),
       allResult(),
       getCourse()
     ]);
-    const getCoursePassed = await dashboardService.getCoursePassed(allResults, allCourses);
+    const getCoursePassed = await getCoursePassedFunc(allResults, allCourses);
     const registeredExaminee = summary.reduce((a, b) => a + b.Registered, 0);
     const completedExaminee = summary.reduce((a, b) => a + b.Completed, 0);
     const courseCount = allCourses.length;
@@ -39,6 +39,6 @@ export const getTotalSummary = async (
 
     return res.status(200).json(finalMap);
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 };

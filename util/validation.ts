@@ -113,10 +113,6 @@ export const examValidation = {
                 "string.empty": `Time Limit cannot be empty`,
                 "any.required": `Time Limit cannot be null or empty`,
             }),
-            question_limit: Joi.number().required().messages({
-                "string.empty": `Question Limit cannot be empty`,
-                "any.required": `Question Limit cannot be null or empty`,
-            }),
         });
         return schema.validate(data, { abortEarly: false });
     },
@@ -132,10 +128,9 @@ export const examValidation = {
             time_limit: Joi.number().min(1).empty().optional().messages({
                 "number.min": `Time Limit cannot be empty`,
             }),
-            question_limit: Joi.number().min(1).empty().optional().messages({
-                "number.min": `Question Limit cannot be empty`,
+            exam_id: Joi.number().required().messages({
+                "any.required": `Seem's no exam id attached`,
             }),
-            exam_id: Joi.number().min(1).empty().optional(),
             status: Joi.boolean().optional(),
         });
         return schema.validate(data, { abortEarly: false });

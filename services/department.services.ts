@@ -25,18 +25,24 @@ export const checkDepartmentIfExist = async (departmentName: string) => {
   });
 };
 
-export const createDepartment = async (data: DepartmentModel) => {
+export const getDepartmentById = async (id: number) => {
+  return await prisma.department.findUnique({
+    where: { department_id: id },
+  });
+};
+
+export const insertDepartmentFunc = async (data: DepartmentModel) => {
   return await prisma.department.create({ data });
 };
 
-export const updateDepartment = async (id: number, data: DepartmentModel) => {
+export const updateDepartmentFunc = async (id: number, data: DepartmentModel) => {
   return await prisma.department.update({
     where: { department_id: id },
     data,
   });
 };
 
-export const deleteDepartment = async (id: number) => {
+export const deleteDepartmentFunc = async (id: number) => {
   return await prisma.department.delete({
     where: { department_id: id },
   });

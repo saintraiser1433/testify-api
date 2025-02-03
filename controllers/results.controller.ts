@@ -1,11 +1,10 @@
-import { Request, Response } from "express";
-import { handlePrismaError } from "../util/prismaErrorHandler";
+import { NextFunction, Request, Response } from "express";
 import { listOfQuestionsById, userInformation, countAttempt, countOfExam, allResult, groupSummaryByExam } from "../services/results.services";
 
 
 
 
-export const getSummaryByExaminee = async (req: Request, res: Response): Promise<Response> => {
+export const getSummaryByExaminee = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
   const id = req.params.examineeId;
 
   if (!id) {
@@ -39,17 +38,17 @@ export const getSummaryByExaminee = async (req: Request, res: Response): Promise
 
     return res.status(200).json(combineData);
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err);
   }
 };
 
 
-export const getAllResult = async (req: Request, res: Response): Promise<Response> => {
+export const getAllResult = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
   try {
     const result = await allResult();
     return res.status(200).json(result);
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err);
   }
 };
 

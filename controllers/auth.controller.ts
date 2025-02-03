@@ -7,13 +7,12 @@ import {
 } from "../services/authService.services";
 import bcrypt from "bcrypt";
 import { DecodedPayload } from "../models";
-import { handlePrismaError } from "../util/prismaErrorHandler";
 
 export const signIn = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const { username, password } = req.body;
   try {
     if (!username || !password) {
@@ -63,15 +62,16 @@ export const signIn = async (
       return res.status(201).json({ token: { accessToken, refreshToken } });
     }
     return res.status(401).json({ message: "Incorrect Credentials" });
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err)
   }
 };
 
 export const signup = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const { username, first_name, last_name, middle_name, password } = req.body;
 
   try {
@@ -111,15 +111,16 @@ export const signup = async (
     });
 
     return res.status(201).json(user);
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err);
   }
 };
 
 export const signOut = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const { id } = req.body;
   try {
     await prisma.user.update({
@@ -134,8 +135,8 @@ export const signOut = async (
     return res.status(200).json({
       message: 'Successfully Signout'
     })
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err);
   }
 
 };
@@ -144,7 +145,7 @@ export const refreshToken = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) {
@@ -191,7 +192,7 @@ export const refreshToken = async (
     });
     return res.status(200).json({ accessToken, status: "authenticated" });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err);
 
   }
 };

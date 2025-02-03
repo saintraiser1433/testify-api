@@ -109,7 +109,7 @@ export const getQuestionPercentage = async () : Promise<QuestionPercentage[]> =>
 `;
 }
 
-export const getCoursePassed = async (allResults: any[], allCourses: any[]) => {
+export const getCoursePassedFunc = async (allResults: any[], allCourses: any[]) => {
   return allCourses.reduce((group: any, item: any) => {
     for (const ch of allResults) {
       const courseId = item.course_id;

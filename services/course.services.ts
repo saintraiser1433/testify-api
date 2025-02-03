@@ -54,6 +54,14 @@ export const checkCourseIfExist = async (courseName: string) => {
   });
 };
 
+export const getCourseById = async (id: number) => {
+  return await prisma.course.findUnique({
+    where: {
+      course_id: id
+    }
+  })
+}
+
 export const deleteCourse = async (id: string) => {
   const response = await prisma.course.delete({
     where: {

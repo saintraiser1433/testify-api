@@ -33,7 +33,6 @@ export interface ExamModel extends Timestamped {
     exam_title: string;
     description: string;
     time_limit: number;
-    question_limit: number;
     status: boolean;
     questionList?: QuestionModel[]; // Optional relationship
     answersList?: AnswersModel[]; // Optional relationship

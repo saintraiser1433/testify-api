@@ -1,21 +1,21 @@
 // controllers/questionController.ts
 import { NextFunction, Request, Response } from "express";
-import * as questionService from "../services/question.services";
-import { choicesValidation, handleValidationError, questionValidation } from "../util/validation";
+import { createQuestionFunc, deleteQuestionFunc, getQuestionsByExamId, updateQuestionFunc } from "../services/question.services";
+import { choicesValidation, questionValidation } from "../util/validation";
 import { ChoicesModel } from "../models";
-import { handlePrismaError } from "../util/prismaErrorHandler";
+
 
 export const getQuestion = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const id = req.params.id;
   try {
-    const data = await questionService.getQuestionsByExamId(Number(id));
+    const data = await getQuestionsByExamId(Number(id));
     return res.status(200).json(data);
-  } catch (err: any) {
-    return handlePrismaError(err, res);
+  } catch (err) {
+    next(err)
   }
 };
 
@@ -23,7 +23,7 @@ export const insertQuestion = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response> => {
+): Promise<Response | void> => {
   const { question, exam_id, choicesList } = req.body;
 
   // Validate question
@@ -33,7 +33,7 @@ export const insertQuestion = async (
   });
 
   if (questionError) {
-    return handleValidationError(questionError, res);
+    next(questionError)
   }
 
   // Validate choices
@@ -44,24 +44,25 @@ export const insertQuestion = async (
   const { error: choicesError } = choicesValidation.insert(choicesData);
 
   if (choicesError) {
-    return handleValidationError(choicesError, res);
+    next(choicesError)
   }
 
   try {
-    const result = await questionService.createQuestion(question, exam_id, choicesList);
+    const result = await createQuestionFunc(question, exam_id, choicesList);
     return res.status(201).json({
       message: "Created successfully",
       data: result,
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 };
 
 export const updateQuestion = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const { question, question_id, choicesList } = req.body;
 
   // Validate question
@@ -71,37 +72,38 @@ export const updateQuestion = async (
   });
 
   if (questionError) {
-    return handleValidationError(questionError, res);
+    next(questionError)
   }
 
   // Validate choices
   const { error: choicesError } = choicesValidation.update(choicesList);
 
   if (choicesError) {
-    return handleValidationError(choicesError, res);
+    next(choicesError)
   }
 
   try {
-    await questionService.updateQuestion(question, question_id, choicesList);
+    await updateQuestionFunc(question, question_id, choicesList);
     return res.status(200).json({
       message: "Updated successfully",
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 };
 
 export const deleteQuestion = async (
   req: Request,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
   const id = req.params.id;
   try {
-    await questionService.deleteQuestion(Number(id));
+    await deleteQuestionFunc(Number(id));
     return res.status(200).json({
       message: "Question deleted successfully",
     });
   } catch (err) {
-    return handlePrismaError(err, res);
+    next(err)
   }
 };
