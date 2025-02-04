@@ -8,6 +8,7 @@ export const fetchExaminees = async () => {
       last_name: true,
       middle_name: true,
       username: true,
+      password:true
     },
     where: {
       role: "examinee",
